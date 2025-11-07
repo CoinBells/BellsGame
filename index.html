@@ -146,8 +146,6 @@ function catchBag(img){
 function makeInteractive(img){
   const handler = (e)=>{ e.preventDefault(); catchBag(img); };
   img.addEventListener('pointerdown', handler, {passive:false});
-  img.addEventListener('touchstart', handler, {passive:false});
-  img.addEventListener('click', handler, {passive:false});
 }
 
 /* ======== إنشاء الحقائب المتساقطة ======== */
