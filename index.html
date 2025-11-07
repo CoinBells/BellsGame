@@ -14,36 +14,41 @@
     overflow:hidden;
   }
 
-  /* start screen */
+  /* شاشة البداية */
   #startScreen{
     position:fixed;
     top:0; left:0;
     width:100%; height:100%;
     background:#f8eecf;
     display:flex;
-    flex-direction:column;
     justify-content:center;
     align-items:center;
     z-index:50;
+    overflow:hidden;
   }
 
   #startLogo{
-    width:80%;
-    max-width:380px;
-    margin-bottom:40px;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
   }
 
   #startBtn{
-    padding:15px 40px;
-    font-size:22px;
-    background:#ffcc00;
+    position:absolute;
+    bottom:55px;
+    padding:16px 52px;
+    font-size:24px;
+    background:#E9B846; /* ذهبي */
+    color:#6B4A1B;      /* بني */
     border:none;
-    border-radius:12px;
+    border-radius:14px;
     cursor:pointer;
     font-weight:bold;
+    box-shadow:0 6px 12px rgba(0,0,0,0.25);
   }
 
-  /* background */
+  /* خلفية اللعبة */
   #gameBackground{
     position:fixed;
     top:0; left:0;
@@ -51,11 +56,10 @@
     background-image:url("images/TOM.PNG");
     background-size:cover;
     background-position:center;
-    background-attachment:initial;
     z-index:-1;
   }
 
-  /* HUD */
+  /* العداد */
   #scoreBox{
     position:fixed;
     top:20px; right:20px;
@@ -83,7 +87,7 @@
     border-radius:10px;
   }
 
-  /* falling bags */
+  /* حقائب Bells */
   .bag{
     position:absolute;
     width:60px;
@@ -94,7 +98,7 @@
     transition:transform 0.1s;
   }
 
-  /* popup */
+  /* الرسالة */
   #popup{
     position:fixed;
     top:50%; left:50%;
@@ -121,7 +125,7 @@
     background:#ffcc00;
   }
 
-  /* footer */
+  /* الفوتر */
   #footer{
     position:fixed;
     bottom:18px; left:50%;
@@ -135,7 +139,7 @@
 
 <body>
 
-<!-- start screen -->
+<!-- شاشة البداية -->
 <div id="startScreen">
   <img id="startLogo" src="images/BELLSGAMELOGO.PNG">
   <button id="startBtn">START</button>
@@ -143,7 +147,7 @@
 
 <div id="gameBackground"></div>
 
-<!-- external sound (iPhone-safe) -->
+<!-- صوت خارجي -->
 <audio id="coinSound" src="https://raw.githubusercontent.com/itsnubix/sounds/main/coin.mp3"></audio>
 
 <!-- HUD -->
@@ -152,7 +156,7 @@
   <div id="bar"><div id="barFill"></div></div>
 </div>
 
-<!-- popup -->
+<!-- Popup -->
 <div id="popup">
   <h2 style="margin-top:0">BellsChain</h2>
   BellsCoin is a Scrypt-based PoW chain with merged mining via LTC & DOGE.<br><br>
@@ -164,7 +168,7 @@
   <button id="closeBtn">Close</button>
 </div>
 
-<!-- footer -->
+<!-- Footer -->
 <div id="footer">BY: @AMJ_BTC</div>
 
 <script>
@@ -172,7 +176,7 @@ let score = 0;
 let maxScore = 10;
 let gameStarted = false;
 
-/* enable audio on iPhone after first click */
+/* iPhone audio unlock */
 document.getElementById("startBtn").addEventListener("click", () => {
   const audio = document.getElementById("coinSound");
   audio.volume = 1;
@@ -184,7 +188,7 @@ document.getElementById("startBtn").addEventListener("click", () => {
   gameStarted = true;
 });
 
-/* spawn falling bag */
+/* spawn bag */
 function spawnBag(){
   if(!gameStarted) return;
 
@@ -193,16 +197,18 @@ function spawnBag(){
   img.className = "bag";
   img.style.left = Math.random() * (window.innerWidth - 60) + "px";
   img.style.top = "-100px";
+
   document.body.appendChild(img);
 
   let fallSpeed = 6;
+
   let fall = setInterval(()=>{
     img.style.top = (img.offsetTop + fallSpeed) + "px";
     if(img.offsetTop > window.innerHeight){
       img.remove();
       clearInterval(fall);
     }
-  },20);
+  }, 20);
 
   img.onclick = ()=>{
     score++;
