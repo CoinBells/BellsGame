@@ -51,7 +51,7 @@
     z-index:-1;
   }
 
-  /* عداد Bells + الوقت */
+  /* HUD */
   #scoreBox{
     position:fixed;
     top:20px;
@@ -63,6 +63,7 @@
     font-weight:600;
     backdrop-filter:blur(4px);
     z-index:10;
+    display:none;
   }
 
   /* الحقائب */
@@ -74,7 +75,7 @@
     transition:transform 0.1s;
   }
 
-  /* رسالة النهاية */
+  /* Popup */
   #popup{
     position:fixed;
     top:50%; left:50%;
@@ -102,7 +103,7 @@
     color:#000;
   }
 
-  /* الفوتر */
+  /* Footer */
   #footer{
     position:fixed;
     bottom:15px;
@@ -111,10 +112,8 @@
     font-size:16px;
     font-weight:bold;
     color:#000;
-    padding:6px 14px;
     z-index:10;
   }
-
 </style>
 </head>
 <body>
@@ -125,15 +124,15 @@
   <button id="startBtn">START</button>
 </div>
 
-<!-- خلفية اللعبة -->
+<!-- الخلفية -->
 <img id="gameBg" src="images/TOM.PNG">
 
 <!-- HUD -->
-<div id="scoreBox" style="display:none;">
+<div id="scoreBox">
   Bells: <span id="score">0</span> — Time: <span id="timer">5</span>s
 </div>
 
-<!-- النتيجة -->
+<!-- Popup النهاية -->
 <div id="popup">
   <h2>BellsChain</h2>
 
@@ -157,11 +156,11 @@
 <script>
 let score = 0;
 let timeLeft = 5;
-let timerRunning = false;
 let timerInterval;
+let bagInterval;
 
-// صوت جاهز عبر Base64
-let clickSound = new Audio("data:audio/mp3;base64,//uQxA... (موجود كامل لما نرسل النسخة النهائية) ");
+/* صوت جاهز Base64 */
+let clickSound = new Audio("data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAA...QmCC");
 
 function spawnBag(){
   let img = document.createElement("img");
@@ -199,10 +198,11 @@ function startGame(){
 
   score = 0;
   timeLeft = 5;
+
   document.getElementById("score").innerText = 0;
   document.getElementById("timer").innerText = 5;
 
-  timerRunning = true;
+  /* بدء التايمر */
   timerInterval = setInterval(()=>{
     timeLeft--;
     document.getElementById("timer").innerText = timeLeft;
@@ -212,12 +212,13 @@ function startGame(){
     }
   },1000);
 
-  setInterval(spawnBag, 350);
+  /* بدء الحقائب */
+  bagInterval = setInterval(spawnBag, 350);
 }
 
 function endGame(){
   clearInterval(timerInterval);
-  timerRunning = false;
+  clearInterval(bagInterval);
 
   let p = "Weak";
   if(score >= 10) p = "Excellent";
