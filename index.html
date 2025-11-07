@@ -4,115 +4,69 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Bells Game</title>
-
 <style>
+  :root{
+    --gold:#E9B846; /* لون الأزرار */
+    --brown:#6B4A1B;/* لون النص على الأزرار */
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
   body{
-    margin:0;
-    padding:0;
-    background:#f6eccc;
-    font-family: monospace;
-    overflow:hidden;
+    margin:0; background:#f6eccc; font-family:monospace; overflow:hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   /* شاشة البداية */
   #startScreen{
-    position:fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    background:#f6eccc;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    z-index:20;
+    position:fixed; inset:0; background:#f6eccc; z-index:50;
+    display:flex; justify-content:center; align-items:center; flex-direction:column;
+    overflow:hidden;
   }
-  #startScreen img{
-    width:80%;
-    max-width:420px;
+  #startLogo{
+    width:100%; height:100%; object-fit:cover; display:block;
   }
   #startBtn{
-    margin-top:25px;
-    background:#ffcd39;
-    color:#000;
-    padding:18px 45px;
-    font-size:26px;
-    border-radius:18px;
-    border:none;
-    font-weight:bold;
-    cursor:pointer;
+    position:absolute; bottom:56px; padding:16px 52px; font-size:24px;
+    background:var(--gold); color:var(--brown); border:none; border-radius:14px;
+    font-weight:bold; box-shadow:0 6px 12px rgba(0,0,0,.25); cursor:pointer;
   }
 
-  /* خلفية اللعبة */
+  /* الخلفية */
   #gameBg{
-    position:fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    object-fit:cover;
-    z-index:-1;
+    position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-1;
   }
 
   /* HUD */
   #scoreBox{
-    position:fixed;
-    top:20px;
-    right:20px;
-    background:rgba(255,255,255,0.85);
-    padding:15px 22px;
-    border-radius:20px;
-    font-size:21px;
-    font-weight:600;
-    backdrop-filter:blur(4px);
-    z-index:10;
-    display:none;
+    position:fixed; top:20px; right:20px; z-index:10;
+    background:rgba(255,255,255,.85); padding:15px 22px; border-radius:20px;
+    font-size:21px; font-weight:600; backdrop-filter:blur(4px); display:none;
   }
 
-  /* الحقائب */
+  /* الحقيبة */
   .bag{
-    position:absolute;
-    width:58px;
-    height:58px;
-    z-index:5;
-    transition:transform 0.1s;
+    position:absolute; width:58px; height:58px; z-index:5;
+    user-select:none; -webkit-user-drag:none; pointer-events:auto;
+    transition:transform .12s;
   }
 
-  /* Popup */
+  /* الرسالة */
   #popup{
-    position:fixed;
-    top:50%; left:50%;
-    transform:translate(-50%, -50%);
-    width:85%;
-    max-width:480px;
-    background:#0d1117;
-    color:#fff;
-    padding:28px;
-    border-radius:18px;
-    display:none;
-    box-shadow:0 0 30px rgba(0,0,0,0.5);
-    z-index:30;
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:85%; max-width:480px; background:#0d1117; color:#e6edf3;
+    padding:28px; border-radius:18px; display:none; z-index:40;
+    box-shadow:0 0 30px rgba(0,0,0,.5);
   }
-  #popup button{
-    width:100%;
-    padding:14px;
-    margin-top:16px;
-    font-size:20px;
-    border:none;
-    border-radius:12px;
-    cursor:pointer;
-    background:#ffcd39;
-    font-weight:bold;
-    color:#000;
+  .btn{
+    width:100%; padding:14px; margin-top:14px; font-size:20px; font-weight:bold;
+    border:none; border-radius:12px; cursor:pointer;
+    background:var(--gold); color:var(--brown); box-shadow:0 4px 8px rgba(0,0,0,.25);
   }
 
-  /* Footer */
   #footer{
-    position:fixed;
-    bottom:15px;
-    left:50%;
-    transform:translateX(-50%);
-    font-size:16px;
-    font-weight:bold;
-    color:#000;
-    z-index:10;
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+    font-size:16px; font-weight:bold; color:#000; z-index:10;
   }
 </style>
 </head>
@@ -120,125 +74,160 @@
 
 <!-- شاشة البداية -->
 <div id="startScreen">
-  <img src="images/BELLSLOGO.PNG">
+  <!-- غيّر الاسم هنا إذا كان شعارك مختلفاً بالضبط -->
+  <img id="startLogo" src="images/BELLSLOGO.PNG" alt="">
   <button id="startBtn">START</button>
 </div>
 
 <!-- الخلفية -->
-<img id="gameBg" src="images/TOM.PNG">
+<img id="gameBg" src="images/TOM.PNG" alt="">
 
 <!-- HUD -->
 <div id="scoreBox">
   Bells: <span id="score">0</span> — Time: <span id="timer">5</span>s
 </div>
 
-<!-- Popup النهاية -->
+<!-- الرسالة -->
 <div id="popup">
-  <h2>BellsChain</h2>
-
-  BellsCoin is a Scrypt-based PoW chain with merged mining via LTC & DOGE.<br><br>
-
+  <h2 style="margin-top:0">BellsChain</h2>
+  BellsCoin is a Scrypt-based PoW chain with merged mining via LTC &amp; DOGE.<br><br>
   Listed on:<br>
   – Nintondo.io<br>
   – NONKYC.io<br>
   – Gate.io<br>
   – MEXC<br><br>
-
   <b>Your Performance:</b><br>
   <span id="performance"></span><br><br>
-
-  <button onclick="closePopup()">Close</button>
-  <button onclick="restartGame()">Again</button>
+  <button class="btn" id="closeBtn">Close</button>
+  <button class="btn" id="againBtn">Again</button>
 </div>
 
 <div id="footer">BY: @AMJ_BTC</div>
 
 <script>
+/* ======== حالة اللعبة ======== */
 let score = 0;
 let timeLeft = 5;
-let timerInterval;
-let bagInterval;
+let timerInterval = null;
+let bagInterval = null;
+let playing = false;
 
-/* صوت جاهز Base64 */
-let clickSound = new Audio("data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAA...QmCC");
-
-function spawnBag(){
-  let img = document.createElement("img");
-  img.src = "images/BELLS.PNG";
-  img.className = "bag";
-
-  img.style.left = Math.random() * (window.innerWidth - 60) + "px";
-  img.style.top = "-80px";
-
-  document.body.appendChild(img);
-
-  let fall = setInterval(()=>{
-    img.style.top = (img.offsetTop + 6) + "px";
-
-    if(img.offsetTop > window.innerHeight){
-      img.remove();
-      clearInterval(fall);
-    }
-  },20);
-
-  img.onclick = ()=>{
-    score++;
-    document.getElementById("score").innerText = score;
-
-    img.style.transform = "scale(0.2)";
-    setTimeout(()=> img.remove(),120);
-
-    clickSound.cloneNode().play();
-  };
+/* ======== صوت بدون ملفات (WebAudio) ======== */
+let audioCtx = null;
+function initAudio(){
+  if(!audioCtx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AC();
+  }
+}
+function playCoin(){
+  if(!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = "square";
+  o.frequency.setValueAtTime(1100, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.12);
+  g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.13);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + 0.14);
 }
 
+/* ======== أدوات ======== */
+function catchBag(img){
+  if(!playing) return;
+  score++;
+  document.getElementById("score").textContent = score;
+  playCoin();
+  img.style.transform = "scale(0.2)";
+  setTimeout(()=> img.remove(), 120);
+}
+
+function makeInteractive(img){
+  const handler = (e)=>{ e.preventDefault(); catchBag(img); };
+  img.addEventListener('pointerdown', handler, {passive:false});
+  img.addEventListener('touchstart', handler, {passive:false});
+  img.addEventListener('click', handler, {passive:false});
+}
+
+/* ======== إنشاء الحقائب المتساقطة ======== */
+function spawnBag(){
+  const img = document.createElement('img');
+  img.src = "images/BELLS.PNG";
+  img.className = "bag";
+  img.style.left = Math.max(6, Math.random() * (window.innerWidth - 64)) + "px";
+  img.style.top = "-80px";
+  makeInteractive(img);
+  document.body.appendChild(img);
+
+  const speed = 6; /* أسرع سقوط */
+  const t = setInterval(()=>{
+    img.style.top = (img.offsetTop + speed) + "px";
+    if(img.offsetTop > window.innerHeight){
+      clearInterval(t);
+      img.remove();
+    }
+    if(!playing){ clearInterval(t); img.remove(); }
+  }, 20);
+}
+
+/* ======== بدء اللعبة ======== */
 function startGame(){
-  document.getElementById("startScreen").style.display = "none";
+  // تفعيل الصوت على iPhone
+  initAudio();
+
+  // إخفاء شاشة البداية فعلياً كي لا تحجب اللمس
+  const s = document.getElementById("startScreen");
+  s.style.opacity = "0";
+  s.style.pointerEvents = "none";
+  setTimeout(()=> s.style.display = "none", 250);
+
+  // إظهار HUD
   document.getElementById("scoreBox").style.display = "block";
 
-  score = 0;
-  timeLeft = 5;
+  // إعادة الضبط
+  score = 0; timeLeft = 5; playing = true;
+  document.getElementById("score").textContent = score;
+  document.getElementById("timer").textContent = timeLeft;
 
-  document.getElementById("score").innerText = 0;
-  document.getElementById("timer").innerText = 5;
-
-  /* بدء التايمر */
+  // مؤقّت 5 ثوانٍ
+  clearInterval(timerInterval);
   timerInterval = setInterval(()=>{
     timeLeft--;
-    document.getElementById("timer").innerText = timeLeft;
+    document.getElementById("timer").textContent = timeLeft;
+    if(timeLeft <= 0){ endGame(); }
+  }, 1000);
 
-    if(timeLeft <= 0){
-      endGame();
-    }
-  },1000);
-
-  /* بدء الحقائب */
+  // توليد الحقائب
+  clearInterval(bagInterval);
   bagInterval = setInterval(spawnBag, 350);
 }
 
+/* ======== إنهاء اللعبة ======== */
 function endGame(){
+  playing = false;
   clearInterval(timerInterval);
   clearInterval(bagInterval);
 
-  let p = "Weak";
-  if(score >= 10) p = "Excellent";
-  else if(score >= 5) p = "Good";
+  let perf = "Weak 💀";
+  if(score >= 10) perf = "Excellent 🔥";
+  else if(score >= 5) perf = "Good ✅";
 
-  document.getElementById("performance").innerText = p;
+  document.getElementById("performance").textContent = perf;
   document.getElementById("popup").style.display = "block";
 }
 
-function closePopup(){
+/* ======== أزرار الرسالة ======== */
+document.getElementById("closeBtn").onclick = ()=> {
   document.getElementById("popup").style.display = "none";
-}
-
-function restartGame(){
+};
+document.getElementById("againBtn").onclick = ()=> {
   document.getElementById("popup").style.display = "none";
   startGame();
-}
+};
 
-document.getElementById("startBtn").onclick = startGame;
+/* زر البداية */
+document.getElementById("startBtn").addEventListener('click', startGame);
 </script>
-
 </body>
 </html>
