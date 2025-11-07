@@ -2,64 +2,64 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Bells Game</title>
 
 <style>
+
+  /* خلفية فل سكرين للعبة */
   body{
     margin:0;
-    background:#99d3ff;
-    font-family: monospace;
-    user-select:none;
+    padding:0;
+    background:#88cfff;
+    background-image:url("images/TOM.PNG");
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
     overflow:hidden;
+    font-family: monospace;
   }
 
-  #tom{
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index:-1;
-    pointer-events:none;
-  }
-
+  /* صندوق العداد */
   #scoreBox{
     position:fixed;
-    right:20px;
     top:20px;
-    background:#e8f6ff;
-    padding:12px 20px;
-    border-radius:12px;
-    font-size:18px;
+    right:20px;
+    background:rgba(255,255,255,0.85);
+    padding:15px 22px;
+    border-radius:20px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+    font-size:20px;
     font-weight:600;
+    backdrop-filter: blur(4px);
     z-index:10;
   }
 
   #bar{
-    width:150px;
+    width:160px;
     height:10px;
-    background:#ddd;
+    background:#ccc;
     border-radius:10px;
-    margin-top:6px;
+    margin-top:8px;
+    overflow:hidden;
   }
   #barFill{
-    width:0%;
     height:100%;
-    background:#ffcc00;
+    width:0%;
+    background:#ffcd39;
     border-radius:10px;
   }
 
+  /* الحقائب */
   .bag{
     position:absolute;
-    width:60px;
-    height:60px;
-    cursor:pointer;
-    transition:transform 0.1s;
+    width:58px;
+    height:58px;
     z-index:5;
+    transition:transform 0.1s;
   }
 
+  /* Popup */
   #popup{
     position:fixed;
     top:50%;
@@ -69,38 +69,45 @@
     max-width:420px;
     background:#0d1117;
     color:#e6edf3;
-    padding:22px;
-    border-radius:12px;
+    padding:25px;
+    border-radius:16px;
     display:none;
+    box-shadow:0 0 30px rgba(0,0,0,0.5);
     z-index:20;
+    text-align:left;
   }
 
   #closeBtn{
-    margin-top:18px;
     width:100%;
-    padding:10px;
-    background:#ffcc00;
-    border:none;
-    border-radius:8px;
+    padding:12px;
     font-size:18px;
+    margin-top:18px;
     font-weight:bold;
+    border:none;
+    border-radius:10px;
     cursor:pointer;
+    background:#ffcd39;
   }
 
+  /* Footer */
   #footer{
     position:fixed;
-    bottom:10px;
+    bottom:18px;
     left:50%;
     transform:translateX(-50%);
     font-size:16px;
     font-weight:bold;
-    color:#000;
-    z-index:20;
+    color:#fff;
+    text-shadow:0 0 8px rgba(0,0,0,0.9);
+    z-index:10;
+    background:rgba(0,0,0,0.25);
+    padding:6px 14px;
+    border-radius:10px;
+    backdrop-filter: blur(4px);
   }
 
 </style>
 </head>
-
 <body>
 
 <div id="scoreBox">
@@ -108,20 +115,14 @@
   <div id="bar"><div id="barFill"></div></div>
 </div>
 
-<img id="tom" src="TOM.PNG">
-
 <div id="popup">
-  <h2>BellsChain</h2>
-  <p>
-  BellsCoin is a Scrypt-based PoW chain with merged mining via LTC and DOGE.<br>
-  Created in 2013. Fully decentralized. No trusted setup. Pure PoW.<br><br>
+  <h2 style="margin-top:0">BellsChain</h2>
+  BellsCoin is a Scrypt-based PoW chain with merged mining via LTC & DOGE.<br><br>
   Listed on:<br>
   – Nintondo.io<br>
   – NONKYC.io<br>
   – Gate.io<br>
-  – MEXC
-  </p>
-
+  – MEXC<br>
   <button id="closeBtn">Close</button>
 </div>
 
@@ -133,14 +134,15 @@ let maxScore = 10;
 
 function spawnBag(){
   let img = document.createElement("img");
-  img.src = "BELLS.PNG";
+  img.src = "images/BELLS.PNG";
   img.className = "bag";
-  img.style.left = Math.random() * (window.innerWidth - 70) + "px";
+  img.style.left = Math.random() * (window.innerWidth - 60) + "px";
   img.style.top = "-70px";
 
   document.body.appendChild(img);
 
   let fallSpeed = 6;
+
   let fall = setInterval(()=>{
     img.style.top = (img.offsetTop + fallSpeed) + "px";
 
@@ -154,16 +156,16 @@ function spawnBag(){
     score++;
     document.getElementById("score").innerText = score;
     document.getElementById("barFill").style.width = (score/maxScore)*100 + "%";
-    img.style.transform = "scale(0.1)";
-    setTimeout(()=>img.remove(),100);
+    img.style.transform = "scale(0.2)";
+    setTimeout(()=>img.remove(),120);
 
     if(score >= maxScore){
-      setTimeout(()=>{ document.getElementById("popup").style.display="block"; },300);
+      document.getElementById("popup").style.display = "block";
     }
   };
 }
 
-setInterval(spawnBag, 300);
+setInterval(spawnBag, 350);
 
 document.getElementById("closeBtn").onclick = ()=>{
   document.getElementById("popup").style.display = "none";
