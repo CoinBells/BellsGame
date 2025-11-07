@@ -6,32 +6,65 @@
 <title>Bells Game</title>
 
 <style>
-
-  /* خلفية فل سكرين للعبة */
   body{
     margin:0;
     padding:0;
-    background:#88cfff;
+    background:#f8eecf;
+    font-family: monospace;
+    overflow:hidden;
+  }
+
+  /* start screen */
+  #startScreen{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:#f8eecf;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:50;
+  }
+
+  #startLogo{
+    width:80%;
+    max-width:380px;
+    margin-bottom:40px;
+  }
+
+  #startBtn{
+    padding:15px 40px;
+    font-size:22px;
+    background:#ffcc00;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:bold;
+  }
+
+  /* background */
+  #gameBackground{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
     background-image:url("images/TOM.PNG");
     background-size:cover;
     background-position:center;
-    background-attachment:fixed;
-    overflow:hidden;
-    font-family: monospace;
+    background-attachment:initial;
+    z-index:-1;
   }
 
-  /* صندوق العداد */
+  /* HUD */
   #scoreBox{
     position:fixed;
-    top:20px;
-    right:20px;
+    top:20px; right:20px;
     background:rgba(255,255,255,0.85);
     padding:15px 22px;
     border-radius:20px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
     font-size:20px;
     font-weight:600;
-    backdrop-filter: blur(4px);
+    backdrop-filter:blur(4px);
     z-index:10;
   }
 
@@ -41,29 +74,30 @@
     background:#ccc;
     border-radius:10px;
     margin-top:8px;
-    overflow:hidden;
   }
+
   #barFill{
-    height:100%;
     width:0%;
+    height:100%;
     background:#ffcd39;
     border-radius:10px;
   }
 
-  /* الحقائب */
+  /* falling bags */
   .bag{
     position:absolute;
-    width:58px;
-    height:58px;
+    width:60px;
+    height:60px;
+    padding:20px;
+    box-sizing:content-box;
     z-index:5;
     transition:transform 0.1s;
   }
 
-  /* Popup */
+  /* popup */
   #popup{
     position:fixed;
-    top:50%;
-    left:50%;
+    top:50%; left:50%;
     transform:translate(-50%, -50%);
     width:85%;
     max-width:420px;
@@ -72,9 +106,7 @@
     padding:25px;
     border-radius:16px;
     display:none;
-    box-shadow:0 0 30px rgba(0,0,0,0.5);
     z-index:20;
-    text-align:left;
   }
 
   #closeBtn{
@@ -86,35 +118,41 @@
     border:none;
     border-radius:10px;
     cursor:pointer;
-    background:#ffcd39;
+    background:#ffcc00;
   }
 
-  /* Footer */
+  /* footer */
   #footer{
     position:fixed;
-    bottom:18px;
-    left:50%;
+    bottom:18px; left:50%;
     transform:translateX(-50%);
-    font-size:16px;
+    font-size:18px;
     font-weight:bold;
-    color:#fff;
-    text-shadow:0 0 8px rgba(0,0,0,0.9);
-    z-index:10;
-    background:rgba(0,0,0,0.25);
-    padding:6px 14px;
-    border-radius:10px;
-    backdrop-filter: blur(4px);
+    color:#000;
   }
-
 </style>
 </head>
+
 <body>
 
+<!-- start screen -->
+<div id="startScreen">
+  <img id="startLogo" src="images/BELLSGAMELOGO.PNG">
+  <button id="startBtn">START</button>
+</div>
+
+<div id="gameBackground"></div>
+
+<!-- external sound (iPhone-safe) -->
+<audio id="coinSound" src="https://raw.githubusercontent.com/itsnubix/sounds/main/coin.mp3"></audio>
+
+<!-- HUD -->
 <div id="scoreBox">
   Bells: <span id="score">0</span>/10
   <div id="bar"><div id="barFill"></div></div>
 </div>
 
+<!-- popup -->
 <div id="popup">
   <h2 style="margin-top:0">BellsChain</h2>
   BellsCoin is a Scrypt-based PoW chain with merged mining via LTC & DOGE.<br><br>
@@ -126,26 +164,40 @@
   <button id="closeBtn">Close</button>
 </div>
 
-<div id="footer">Bells Game By : @AMJ_BTC</div>
+<!-- footer -->
+<div id="footer">BY: @AMJ_BTC</div>
 
 <script>
 let score = 0;
 let maxScore = 10;
+let gameStarted = false;
 
+/* enable audio on iPhone after first click */
+document.getElementById("startBtn").addEventListener("click", () => {
+  const audio = document.getElementById("coinSound");
+  audio.volume = 1;
+  audio.muted = false;
+  audio.play().catch(()=>{});
+  audio.pause();
+
+  document.getElementById("startScreen").style.display = "none";
+  gameStarted = true;
+});
+
+/* spawn falling bag */
 function spawnBag(){
+  if(!gameStarted) return;
+
   let img = document.createElement("img");
   img.src = "images/BELLS.PNG";
   img.className = "bag";
   img.style.left = Math.random() * (window.innerWidth - 60) + "px";
-  img.style.top = "-70px";
-
+  img.style.top = "-100px";
   document.body.appendChild(img);
 
   let fallSpeed = 6;
-
   let fall = setInterval(()=>{
     img.style.top = (img.offsetTop + fallSpeed) + "px";
-
     if(img.offsetTop > window.innerHeight){
       img.remove();
       clearInterval(fall);
@@ -156,6 +208,11 @@ function spawnBag(){
     score++;
     document.getElementById("score").innerText = score;
     document.getElementById("barFill").style.width = (score/maxScore)*100 + "%";
+
+    const audio = document.getElementById("coinSound");
+    audio.currentTime = 0;
+    audio.play().catch(()=>{});
+
     img.style.transform = "scale(0.2)";
     setTimeout(()=>img.remove(),120);
 
@@ -167,13 +224,13 @@ function spawnBag(){
 
 setInterval(spawnBag, 350);
 
+/* close popup */
 document.getElementById("closeBtn").onclick = ()=>{
   document.getElementById("popup").style.display = "none";
   score = 0;
   document.getElementById("score").innerText = 0;
   document.getElementById("barFill").style.width = "0%";
 };
-
 </script>
 
 </body>
