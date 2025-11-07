@@ -2,105 +2,187 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bells Game</title>
+
 <style>
-  html,body{margin:0;height:100%;overflow:hidden;touch-action:none;background:#8ed3ff;font-family:monospace;}
-  #game{position:fixed;inset:0;overflow:hidden;}
-  #nook{
-    position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);
-    width:min(55vw,380px);
-    z-index:3;
+  body{
+    margin:0;
+    background:#99d3ff;
+    font-family: monospace;
+    user-select:none;
+    overflow:hidden;
+  }
+
+  /* TOM Full Screen */
+  #tom{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index:-1;
     pointer-events:none;
   }
+
+  #scoreBox{
+    position:fixed;
+    right:20px;
+    top:20px;
+    background:#e8f6ff;
+    padding:12px 20px;
+    border-radius:12px;
+    font-size:18px;
+    font-weight:600;
+    z-index:10;
+  }
+
+  #bar{
+    width:150px;
+    height:10px;
+    background:#ddd;
+    border-radius:10px;
+    margin-top:6px;
+  }
+  #barFill{
+    width:0%;
+    height:100%;
+    background:#ffcc00;
+    border-radius:10px;
+  }
+
   .bag{
     position:absolute;
     width:60px;
-    user-select:none;
-    touch-action:none;
-    z-index:4;
+    height:60px;
+    cursor:pointer;
+    transition:transform 0.1s;
+    z-index:5;
   }
-  #hud{
-    position:fixed;top:12px;right:12px;z-index:5;
-    background:rgba(255,255,255,.7);padding:10px 12px;border-radius:10px;
+
+  /* Popup Message */
+  #popup{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    width:85%;
+    max-width:420px;
+    background:#0d1117;
+    color:#e6edf3;
+    padding:22px;
+    border-radius:12px;
+    display:none;
+    animation: fadeIn 0.3s ease;
+    z-index:20;
   }
-  .bar{height:8px;width:180px;background:#ddd;border-radius:6px;overflow:hidden;margin-top:6px;}
-  .fill{height:100%;width:0%;background:#ffc640;}
-  #msg{
-    position:fixed;inset:0;display:none;place-items:center;
-    background:rgba(0,0,0,.7);z-index:10;
+  @keyframes fadeIn{
+    from{opacity:0}
+    to{opacity:1}
   }
-  #card{
-    background:#0b0f10;color:#fff;width:min(700px,90vw);
-    padding:20px;border-radius:12px;border:1px solid #334;
+
+  #closeBtn{
+    margin-top:18px;
+    width:100%;
+    padding:10px;
+    background:#ffcc00;
+    border:none;
+    border-radius:8px;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
   }
-  pre{white-space:pre-wrap;word-wrap:break-word;background:#0d141a;padding:12px;border-radius:10px;}
+
+  /* Footer */
+  #footer{
+    position:fixed;
+    bottom:10px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:16px;
+    font-weight:bold;
+    color:#000;
+    z-index:20;
+  }
+
 </style>
 </head>
+
 <body>
-<div id="game">
-  <img id="nook" src="images/TOM.PNG" alt="">
+
+<div id="scoreBox">
+  Bells: <span id="score">0</span>/10
+  <div id="bar"><div id="barFill"></div></div>
 </div>
 
-<div id="hud">
-  Bells: <b id="count">0</b>/100
-  <div class="bar"><div class="fill" id="fill"></div></div>
+<img id="tom" src="tom.png">
+
+<!-- Popup -->
+<div id="popup">
+  <h2>BellsChain</h2>
+  <p>
+  BellsCoin is a Scrypt-based PoW chain with merged mining via LTC and DOGE.<br>
+  Created in 2013. Fully decentralized. No trusted setup. Pure PoW.<br><br>
+  Listed on:<br>
+  – Nintondo.io<br>
+  – NONKYC.io<br>
+  – Gate.io<br>
+  – MEXC
+  </p>
+
+  <button id="closeBtn">Close</button>
 </div>
 
-<div id="msg">
-  <div id="card">
-    <h2>BellsChain — Complete</h2>
-<pre>
-BellsCoin is a Scrypt-based PoW chain with merged mining via LTC and DOGE.
-Created in 2013. Fully decentralized. No trusted setup. Pure PoW.
-
-Listed on:
-- Nintondo.io
-- NONKYC.io
-- Gate.io
-- MEXC
-
-Message unlocked by user.
-</pre>
-  </div>
-</div>
+<div id="footer">Bells Game By : @AMJ_BTC</div>
 
 <script>
-const game = document.getElementById("game");
-const countEl = document.getElementById("count");
-const fill = document.getElementById("fill");
-const msg = document.getElementById("msg");
-
-let count = 0;
+let score = 0;
+let maxScore = 10;
 
 function spawnBag(){
-  const img = document.createElement("img");
-  img.src = "images/BAG.PNG";
+  let img = document.createElement("img");
+  img.src = "bells.png";
   img.className = "bag";
-  img.style.left = (Math.random() * (innerWidth - 60)) + "px";
-  img.style.top = (Math.random() * (innerHeight - 150)) + "px";
-  game.appendChild(img);
+  img.style.left = Math.random() * (window.innerWidth - 70) + "px";
+  img.style.top = "-70px";
 
-  img.onclick = () => {
-    img.remove();
-    count++;
-    if(count>100) count = 100;
-    countEl.textContent = count;
-    fill.style.width = count + "%";
-    if(count===100) showMsg();
+  document.body.appendChild(img);
+
+  let fallSpeed = 6; // سقوط سريع
+  let fall = setInterval(()=>{
+    img.style.top = (img.offsetTop + fallSpeed) + "px";
+
+    if(img.offsetTop > window.innerHeight){
+      img.remove();
+      clearInterval(fall);
+    }
+  },20);
+
+  img.onclick = ()=>{
+    score++;
+    document.getElementById("score").innerText = score;
+    document.getElementById("barFill").style.width = (score/maxScore)*100 + "%";
+    img.style.transform = "scale(0.1)";
+    setTimeout(()=>img.remove(),100);
+
+    if(score >= maxScore){
+      setTimeout(()=>{ document.getElementById("popup").style.display="block"; },300);
+    }
   };
 }
 
-function loopSpawn(){
-  spawnBag();
-  setTimeout(loopSpawn, 800 + Math.random()*900);
-}
+setInterval(spawnBag, 300); // حقائب كثيييرة
 
-function showMsg(){
-  msg.style.display = "grid";
-}
+// زر الإغلاق
+document.getElementById("closeBtn").onclick = ()=>{
+  document.getElementById("popup").style.display = "none";
+  score = 0;
+  document.getElementById("score").innerText = 0;
+  document.getElementById("barFill").style.width = "0%";
+};
 
-loopSpawn();
 </script>
+
 </body>
 </html>
