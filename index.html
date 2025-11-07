@@ -1,185 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-<title>Bells — Tom Nook Shaker</title>
-<meta name="description" content="Shake Tom Nook to ring the Bells." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Bells Game</title>
 <style>
-  :root{
-    --bg1:#9fe7ff; --bg2:#6ad17a; --ink:#0b0f10; --gold:#e6b400; --muted:#264653;
+  html,body{margin:0;height:100%;overflow:hidden;touch-action:none;background:#8ed3ff;font-family:monospace;}
+  #game{position:fixed;inset:0;overflow:hidden;}
+  #nook{
+    position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);
+    width:min(55vw,380px);
+    z-index:3;
+    pointer-events:none;
   }
-  html,body{height:100%;margin:0}
-  body{
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-    background: linear-gradient(#8ed3ff 0 55%, #79d982 55% 100%);
-    overflow:hidden; touch-action:none; user-select:none; color:var(--ink);
+  .bag{
+    position:absolute;
+    width:60px;
+    user-select:none;
+    touch-action:none;
+    z-index:4;
   }
-  canvas#rain{position:fixed; inset:0; z-index:0; pointer-events:none}
-  .nook{
-    position:fixed; left:50%; top:58%; transform:translate(-50%,-50%);
-    width:min(60vmin,520px); filter:drop-shadow(0 10px 18px rgba(0,0,0,.25));
-    transition: transform 60ms linear;
-    z-index:2;
+  #hud{
+    position:fixed;top:12px;right:12px;z-index:5;
+    background:rgba(255,255,255,.7);padding:10px 12px;border-radius:10px;
   }
-  .hud{
-    position:fixed; top:12px; right:12px; z-index:3;
-    background:rgba(255,255,255,.65); backdrop-filter:blur(8px);
-    border-radius:10px; padding:10px 14px; font-size:14px; line-height:1.6;
+  .bar{height:8px;width:180px;background:#ddd;border-radius:6px;overflow:hidden;margin-top:6px;}
+  .fill{height:100%;width:0%;background:#ffc640;}
+  #msg{
+    position:fixed;inset:0;display:none;place-items:center;
+    background:rgba(0,0,0,.7);z-index:10;
   }
-  .bar{height:8px; width:200px; background:#e5e7eb; border-radius:6px; overflow:hidden}
-  .fill{height:100%; width:0%; background:linear-gradient(90deg,#ffd166,#fca311); transition:width 120ms linear}
-  .reveal{
-    position:fixed; inset:0; display:none; place-items:center; z-index:4;
-    background:rgba(0,0,0,.6);
+  #card{
+    background:#0b0f10;color:#fff;width:min(700px,90vw);
+    padding:20px;border-radius:12px;border:1px solid #334;
   }
-  .card{
-    background:#0a0d10; color:#fff; border:1px solid #223; border-radius:14px;
-    width:min(720px,92vw); padding:22px;
-  }
-  .card h1{margin:0 0 10px; font-size:22px; color:var(--gold)}
-  .card pre{
-    margin:0; white-space:pre-wrap; word-wrap:break-word; direction:ltr;
-    background:#0f141a; padding:16px; border-radius:10px; color:#e5e7eb;
-  }
-  .row{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
-  .btn{
-    appearance:none; border:0; cursor:pointer; padding:10px 14px; border-radius:10px;
-    background:#ffd166; color:#111; font-weight:700;
-  }
-  .btn.alt{background:#e5e7eb}
-  .hint{
-    position:fixed; left:50%; bottom:16px; transform:translateX(-50%);
-    background:rgba(255,255,255,.75); padding:8px 12px; border-radius:999px; font-size:13px; z-index:3;
-  }
-  a{color:#ffd166}
-  .nook-placeholder{
-    font-size:180px;
-    text-align:center;
-    line-height:1;
-  }
+  pre{white-space:pre-wrap;word-wrap:break-word;background:#0d141a;padding:12px;border-radius:10px;}
 </style>
 </head>
 <body>
-<canvas id="rain"></canvas>
-
-<div class="nook" id="nook">
-  <div class="nook-placeholder">🦝💰</div>
+<div id="game">
+  <img id="nook" src="images/TOM.PNG" alt="">
 </div>
 
-<div class="hud" aria-live="polite">
-  <div>Shakes: <b id="shakes">0</b> / 100</div>
+<div id="hud">
+  Bells: <b id="count">0</b>/100
   <div class="bar"><div class="fill" id="fill"></div></div>
 </div>
 
-<div class="hint">Move your mouse fast — hear the Bells 💰</div>
+<div id="msg">
+  <div id="card">
+    <h2>BellsChain — Complete</h2>
+<pre>
+BellsCoin is a Scrypt-based PoW chain with merged mining via LTC and DOGE.
+Created in 2013. Fully decentralized. No trusted setup. Pure PoW.
 
-<div class="reveal" id="reveal">
-  <div class="card">
-    <h1>Welcome to BellsChain — mined, not minted</h1>
-    <pre>
-What is BellsCoin?
+Listed on:
+- Nintondo.io
+- NONKYC.io
+- Gate.io
+- MEXC
 
-From: @AMJ_BTC
-To: Cryptocurrency Community
-Date: Sat Nov 1 2025 2:30 UTC
-
-I've been working with the Bells network — a proof-of-work blockchain originally created by @BillyM2k in 2013 — to continue its evolution as a decentralized system built for transparency and resilience.
-
-BellsCoin runs on its own blockchain called BellsChain, using merged mining with Litecoin and Dogecoin to secure the network through Scrypt-based PoW. There are no trusted third parties.
-
-The next major upgrade will introduce OP_CAT to enable programmable contracts while preserving its original PoW foundation.
-Maintainer: @YarSawyer
-    </pre>
-    <div class="row">
-      <button class="btn" id="tweet">Tweet your Bells moment</button>
-      <a class="btn alt" href="https://bellscoin.com" target="_blank" rel="noopener">Official site 🌐</a>
-    </div>
+Message unlocked by user.
+</pre>
   </div>
 </div>
 
 <script>
-const cv = document.getElementById('rain');
-const cx = cv.getContext('2d');
-let W,H, drops=[];
-const bag = "💰";
-function resize(){W = cv.width = innerWidth;H = cv.height = innerHeight;}
-addEventListener('resize', resize); resize();
-function spawn(n=14){
-  for(let i=0;i<n;i++){
-    drops.push({x: Math.random()*W,y: -40 - Math.random()*H,s: 24 + Math.random()*28,v: 1.2 + Math.random()*2.2,r: Math.random()*Math.PI});
-  }
-}
-function loop(){
-  cx.clearRect(0,0,W,H);
-  drops.forEach(d=>{
-    d.y += d.v;d.r += 0.01;
-    cx.save();cx.translate(d.x,d.y);cx.rotate(Math.sin(d.r)*0.2);
-    cx.font = `${d.s}px system-ui,Segoe UI Emoji`;cx.fillText(bag,0,0);cx.restore();
-  });
-  drops = drops.filter(d=>d.y < H+50);
-  if(drops.length < 90) spawn(6);
-  requestAnimationFrame(loop);
-}
-spawn(60); loop();
+const game = document.getElementById("game");
+const countEl = document.getElementById("count");
+const fill = document.getElementById("fill");
+const msg = document.getElementById("msg");
 
-const nook = document.getElementById('nook');
-let lastX=null,lastY=null, velocity=0, shakes=0, gate=false;
-const fill = document.getElementById('fill');
-const shakesEl = document.getElementById('shakes');
+let count = 0;
 
-function ping(){
-  try{
-    const ac = new (window.AudioContext||window.webkitAudioContext)();
-    const o = ac.createOscillator();
-    const g = ac.createGain();
-    o.type='triangle'; o.frequency.value=880;
-    o.connect(g); g.connect(ac.destination);
-    g.gain.setValueAtTime(0.0001, ac.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.3, ac.currentTime+0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+0.15);
-    o.start(); o.stop(ac.currentTime+0.16);
-  }catch(e){}
+function spawnBag(){
+  const img = document.createElement("img");
+  img.src = "images/BAG.PNG";
+  img.className = "bag";
+  img.style.left = (Math.random() * (innerWidth - 60)) + "px";
+  img.style.top = (Math.random() * (innerHeight - 150)) + "px";
+  game.appendChild(img);
+
+  img.onclick = () => {
+    img.remove();
+    count++;
+    if(count>100) count = 100;
+    countEl.textContent = count;
+    fill.style.width = count + "%";
+    if(count===100) showMsg();
+  };
 }
 
-function updateProgress(){
-  const pct = Math.min(100, (shakes/100)*100);
-  fill.style.width = pct + '%';
-  shakesEl.textContent = Math.min(shakes,100);
-  if(shakes>=100) reveal();
+function loopSpawn(){
+  spawnBag();
+  setTimeout(loopSpawn, 800 + Math.random()*900);
 }
 
-function reveal(){
-  if(gate) return;
-  gate=true;
-  document.getElementById('reveal').style.display='grid';
+function showMsg(){
+  msg.style.display = "grid";
 }
 
-function onMove(x,y){
-  if(lastX===null){lastX=x; lastY=y; return;}
-  const dx = x - lastX, dy = y - lastY;
-  lastX = x; lastY = y;
-  const v = Math.hypot(dx,dy);
-  velocity = (velocity*0.8) + (v*0.2);
-  const wobble = Math.min(20, velocity*0.4);
-  nook.style.transform = `translate(-50%,-50%) rotate(${(dx*0.03)}deg) translateY(${(-wobble*0.15)}px)`;
-  if(v>22){
-    shakes++;
-    spawn(10);
-    ping();
-    updateProgress();
-  }
-}
-addEventListener('mousemove', e=>onMove(e.clientX,e.clientY), {passive:true});
-addEventListener('touchmove', e=>{
-  const t=e.touches[0]; if(t) onMove(t.clientX,t.clientY);
-},{passive:true});
-
-document.getElementById('tweet').addEventListener('click', async ()=>{
-  const text = encodeURIComponent("I unlocked the BellsChain Easter Egg 🔔💰 #BellsCoin #BellsChain");
-  const url = encodeURIComponent(location.href);
-  open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`,'_blank');
-});
+loopSpawn();
 </script>
 </body>
 </html>
