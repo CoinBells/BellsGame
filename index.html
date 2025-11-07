@@ -4,100 +4,99 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Bells Game</title>
+
 <style>
   :root{
-    --gold:#E9B846; /* لون الأزرار */
-    --brown:#6B4A1B;/* لون النص على الأزرار */
+    --gold:#E9B846;
+    --brown:#3A2405;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
     margin:0; background:#f6eccc; font-family:monospace; overflow:hidden;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
   }
 
-  /* شاشة البداية */
   #startScreen{
     position:fixed; inset:0; background:#f6eccc; z-index:50;
     display:flex; justify-content:center; align-items:center; flex-direction:column;
-    overflow:hidden;
   }
-  #startLogo{
-    width:100%; height:100%; object-fit:cover; display:block;
-  }
+  #startLogo{width:100%; height:100%; object-fit:cover;}
   #startBtn{
-    position:absolute; bottom:56px; padding:16px 52px; font-size:24px;
-    background:var(--gold); color:var(--brown); border:none; border-radius:14px;
-    font-weight:bold; box-shadow:0 6px 12px rgba(0,0,0,.25); cursor:pointer;
+    position:absolute; bottom:56px;
+    background:var(--gold); color:var(--brown);
+    padding:16px 52px; border:none; border-radius:14px;
+    font-size:24px; font-weight:bold; cursor:pointer;
   }
 
-  /* الخلفية */
   #gameBg{
-    position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-1;
+    position:fixed; inset:0; width:100%; height:100%;
+    object-fit:cover; z-index:-1;
   }
 
-  /* HUD */
   #scoreBox{
     position:fixed; top:20px; right:20px; z-index:10;
-    background:rgba(255,255,255,.85); padding:15px 22px; border-radius:20px;
-    font-size:21px; font-weight:600; backdrop-filter:blur(4px); display:none;
+    background:rgba(255,255,255,.85);
+    padding:15px 22px; border-radius:20px;
+    font-size:21px; font-weight:600; display:none;
   }
 
-  /* الحقيبة */
   .bag{
-    position:absolute; width:58px; height:58px; z-index:5;
-    user-select:none; -webkit-user-drag:none; pointer-events:auto;
+    position:absolute; width:58px; height:58px;
+    user-select:none; pointer-events:auto;
+    -webkit-user-drag:none;
     transition:transform .12s;
   }
 
-  /* الرسالة */
   #popup{
-    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:85%; max-width:480px; background:#0d1117; color:#e6edf3;
-    padding:28px; border-radius:18px; display:none; z-index:40;
-    box-shadow:0 0 30px rgba(0,0,0,.5);
+    position:fixed; left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    width:85%; max-width:480px;
+    background:#0d1117; color:#e6edf3;
+    padding:28px; border-radius:18px;
+    display:none; z-index:40;
   }
   .btn{
-    width:100%; padding:14px; margin-top:14px; font-size:20px; font-weight:bold;
-    border:none; border-radius:12px; cursor:pointer;
-    background:var(--gold); color:var(--brown); box-shadow:0 4px 8px rgba(0,0,0,.25);
+    width:100%; padding:14px; margin-top:14px;
+    background:var(--gold); color:var(--brown);
+    border:none; border-radius:12px;
+    font-size:20px; font-weight:bold; cursor:pointer;
   }
 
   #footer{
-    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
-    font-size:16px; font-weight:bold; color:#000; z-index:10;
+    position:fixed; bottom:16px; left:50%;
+    transform:translateX(-50%); font-size:16px; font-weight:bold;
   }
 </style>
 </head>
+
 <body>
 
 <!-- شاشة البداية -->
 <div id="startScreen">
-  <!-- غيّر الاسم هنا إذا كان شعارك مختلفاً بالضبط -->
-  <img id="startLogo" src="images/BELLSLOGO.PNG" alt="">
+  <img id="startLogo" src="images/BELLSLOGO.PNG">
   <button id="startBtn">START</button>
 </div>
 
-<!-- الخلفية -->
-<img id="gameBg" src="images/TOM.PNG" alt="">
+<img id="gameBg" src="images/TOM.PNG">
 
-<!-- HUD -->
 <div id="scoreBox">
   Bells: <span id="score">0</span> — Time: <span id="timer">5</span>s
 </div>
 
-<!-- الرسالة -->
 <div id="popup">
-  <h2 style="margin-top:0">BellsChain</h2>
-  BellsCoin is a Scrypt-based PoW chain with merged mining via LTC &amp; DOGE.<br><br>
+  <h2>BellsChain</h2>
+  BellsCoin is a Scrypt-based PoW chain with merged mining via LTC & DOGE.<br><br>
   Listed on:<br>
   – Nintondo.io<br>
   – NONKYC.io<br>
   – Gate.io<br>
   – MEXC<br><br>
+
   <b>Your Performance:</b><br>
   <span id="performance"></span><br><br>
+
   <button class="btn" id="closeBtn">Close</button>
   <button class="btn" id="againBtn">Again</button>
 </div>
@@ -105,14 +104,13 @@
 <div id="footer">BY: @AMJ_BTC</div>
 
 <script>
-/* ======== حالة اللعبة ======== */
 let score = 0;
 let timeLeft = 5;
 let timerInterval = null;
 let bagInterval = null;
 let playing = false;
 
-/* ======== صوت بدون ملفات (WebAudio) ======== */
+/* صوت بسيط */
 let audioCtx = null;
 function initAudio(){
   if(!audioCtx){
@@ -125,83 +123,86 @@ function playCoin(){
   const o = audioCtx.createOscillator();
   const g = audioCtx.createGain();
   o.type = "square";
-  o.frequency.setValueAtTime(1100, audioCtx.currentTime);
-  o.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.12);
+  o.frequency.setValueAtTime(1200, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.12);
   g.gain.setValueAtTime(0.12, audioCtx.currentTime);
   g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.13);
   o.connect(g).connect(audioCtx.destination);
   o.start(); o.stop(audioCtx.currentTime + 0.14);
 }
 
-/* ======== أدوات ======== */
+/* الحقيبة */
 function catchBag(img){
-  if(!playing) return;
+  if(img.dataset.caught === "1") return; // ✅ يمنع التكرار
+  img.dataset.caught = "1";             // ✅ أول لمسة فقط
+
   score++;
   document.getElementById("score").textContent = score;
+
   playCoin();
-  img.style.transform = "scale(0.2)";
+
+  img.style.transform = "scale(0.25)";
   setTimeout(()=> img.remove(), 120);
 }
 
+/* إضافة حدث واحد فقط */
 function makeInteractive(img){
-  const handler = (e)=>{ e.preventDefault(); catchBag(img); };
-  img.addEventListener('pointerdown', handler, {passive:false});
+  img.addEventListener("pointerdown", (e)=>{
+    e.preventDefault();
+    catchBag(img);
+  }, {passive:false});
 }
 
-/* ======== إنشاء الحقائب المتساقطة ======== */
+/* إنزال الحقائب */
 function spawnBag(){
-  const img = document.createElement('img');
+  const img = document.createElement("img");
   img.src = "images/BELLS.PNG";
   img.className = "bag";
-  img.style.left = Math.max(6, Math.random() * (window.innerWidth - 64)) + "px";
+
+  img.style.left = Math.random() * (window.innerWidth - 60) + "px";
   img.style.top = "-80px";
+
   makeInteractive(img);
   document.body.appendChild(img);
 
-  const speed = 6; /* أسرع سقوط */
-  const t = setInterval(()=>{
-    img.style.top = (img.offsetTop + speed) + "px";
+  const fall = setInterval(()=>{
+    img.style.top = (img.offsetTop + 6) + "px";
     if(img.offsetTop > window.innerHeight){
-      clearInterval(t);
+      clearInterval(fall);
       img.remove();
     }
-    if(!playing){ clearInterval(t); img.remove(); }
-  }, 20);
+    if(!playing){
+      clearInterval(fall);
+      img.remove();
+    }
+  },20);
 }
 
-/* ======== بدء اللعبة ======== */
+/* بدء اللعبة */
 function startGame(){
-  // تفعيل الصوت على iPhone
   initAudio();
 
-  // إخفاء شاشة البداية فعلياً كي لا تحجب اللمس
   const s = document.getElementById("startScreen");
   s.style.opacity = "0";
   s.style.pointerEvents = "none";
   setTimeout(()=> s.style.display = "none", 250);
 
-  // إظهار HUD
   document.getElementById("scoreBox").style.display = "block";
 
-  // إعادة الضبط
   score = 0; timeLeft = 5; playing = true;
   document.getElementById("score").textContent = score;
   document.getElementById("timer").textContent = timeLeft;
 
-  // مؤقّت 5 ثوانٍ
-  clearInterval(timerInterval);
   timerInterval = setInterval(()=>{
     timeLeft--;
     document.getElementById("timer").textContent = timeLeft;
-    if(timeLeft <= 0){ endGame(); }
-  }, 1000);
+    if(timeLeft <= 0) endGame();
+  },1000);
 
-  // توليد الحقائب
-  clearInterval(bagInterval);
   bagInterval = setInterval(spawnBag, 350);
 }
 
-/* ======== إنهاء اللعبة ======== */
+/* نهاية اللعبة */
 function endGame(){
   playing = false;
   clearInterval(timerInterval);
@@ -215,17 +216,10 @@ function endGame(){
   document.getElementById("popup").style.display = "block";
 }
 
-/* ======== أزرار الرسالة ======== */
-document.getElementById("closeBtn").onclick = ()=> {
-  document.getElementById("popup").style.display = "none";
-};
-document.getElementById("againBtn").onclick = ()=> {
-  document.getElementById("popup").style.display = "none";
-  startGame();
-};
-
-/* زر البداية */
-document.getElementById("startBtn").addEventListener('click', startGame);
+document.getElementById("startBtn").onclick = startGame;
+document.getElementById("closeBtn").onclick = ()=> document.getElementById("popup").style.display = "none";
+document.getElementById("againBtn").onclick = ()=>{ document.getElementById("popup").style.display = "none"; startGame(); };
 </script>
+
 </body>
 </html>
