@@ -28,7 +28,7 @@
     .drop img {width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-drag:none;
       filter:drop-shadow(0 5px 2px #241e1580)}
     .drop.bag:active img {transform:scale(.91)}
-    .drop.redd {width:clamp(56px,15vw,78px);height:clamp(72px,19vw,96px)}
+    .drop.redd {width:clamp(36px,10vw,52px);height:clamp(46px,13vw,66px)}
     .drop.redd img {filter:drop-shadow(0 8px 6px #31160977)}
     .drop.caught {pointer-events:none;animation:pop .18s ease-out forwards}
     @keyframes pop {to {opacity:0;scale:.4;rotate:16deg}}
@@ -311,9 +311,9 @@
       pic.alt = '';
       pic.draggable = false;
       el.appendChild(pic);
-      // Keep Redd near the bag size so he is recognizable but harder to dodge.
-      const w = isRedd ? Math.min(Math.max(innerWidth * .15, 56), 78) : Math.min(Math.max(innerWidth * .16, 60), 86);
-      const h = isRedd ? Math.min(Math.max(innerWidth * .19, 72), 96) : w;
+      // Make Redd clearly smaller than BELLS bags on mobile and desktop.
+      const w = isRedd ? Math.min(Math.max(innerWidth * .10, 36), 52) : Math.min(Math.max(innerWidth * .16, 60), 86);
+      const h = isRedd ? Math.min(Math.max(innerWidth * .13, 46), 66) : w;
       const maxX = Math.max(6, field.clientWidth - w - 6);
       let x = 6 + Math.random() * Math.max(0, maxX - 6);
       const y = -h - 4;
