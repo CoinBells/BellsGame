@@ -17,13 +17,13 @@ A mobile-first Bellscoin arcade game created for the Bells community. Catch fall
 - Multiple clickable bags, with duplicate-tap prevention
 - Random Redd appearances and immediate game-over
 - Speed ramp, low-time alert, sound toggle and optional device haptics
-- Personal best stored in the browser's \`localStorage\`
+- Personal best stored in the browser's `localStorage`
 - Responsive mobile layout for iPhone, Android and Telegram's in-app browser
 - No frameworks, packages, trackers, user accounts or backend
 
 ## Run locally
 
-Serve the repository with any static web server and open \`index.html\`. All images are relative to this page: \`images/BELLS.PNG\`, \`images/BELLSLOGO.PNG\`, \`images/TOM.PNG\`, and \`images/redd.svg\`.
+Serve the repository with any static web server and open `index.html`. All images are relative to this page: `images/BELLS.PNG`, `images/BELLSLOGO.PNG`, `images/TOM.PNG`, and `images/redd.svg`.
 
 To preview the feature branch without changing the production site, use a static branch preview service that serves HTML and relative assets, or clone and serve this branch locally.
 
