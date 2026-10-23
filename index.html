@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
   <meta name="theme-color" content="#234b38">
-  <meta name="description" content="Catch BELLS bags for 60 seconds, dodge Redd, and set a village record!">
+  <meta name="description" content="30 seconds. Fast BELLS bags. Dodge Redd and claim the Telegram leaderboard!">
   <title>Bells Village Rush | Bellscoin Arcade</title>
   <style>
     :root {
@@ -88,6 +88,19 @@
     .actions .cta {font-size:15px;min-height:52px}
     .secondary {background:#fffdf4;box-shadow:0 6px 0 #775939}
     .danger h2 {color:#b3332e}
+    .rankLaunch {margin-top:14px;padding:12px 16px;width:100%;border:2px solid #ffdc85;
+      border-radius:16px;background:#153d31e8;color:#fff6d9;font-weight:900;font-size:15px;
+      box-shadow:0 4px 0 #392915;cursor:pointer}
+    .inCard {position:relative;margin-top:17px}
+    .rankStatus {position:relative;background:#e6d7ad;padding:9px;border-radius:12px;
+      font-size:12px;font-weight:900}
+    #ranksScreen {z-index:80;align-items:center;background:#182a23c9;backdrop-filter:blur(5px)}
+    .ranksCard {max-height:min(85vh,740px);overflow:auto}
+    .rankList {position:relative;display:grid;gap:7px;margin:18px 0}
+    .rankRow {display:flex;justify-content:space-between;gap:8px;align-items:center;
+      border:2px solid #d9b571;background:#fffaf0;border-radius:12px;padding:11px 12px;font-size:14px;text-align:left}
+    .rankRow span {overflow-wrap:anywhere}
+    #rankingMessage {position:relative;font-size:13px;font-weight:700}
     @media (max-height:650px) {
       .startPanel h1 {font-size:27px;margin:8px 0 4px}
       .startPanel p {font-size:12px;margin:7px 0 10px}
@@ -121,12 +134,13 @@
       <h1>BELLS VILLAGE<br>RUSH</h1>
       <p>Grab as many BELLS bags as you can!<br>Watch out for the sneaky fox, Redd.</p>
       <div class="rules">
-        <span class="rule">⏱ 60 SECONDS</span>
+        <span class="rule">⏱ 30 SECONDS</span>
         <span class="rule">💰 TAP THE BAGS</span>
         <span class="rule">🦊 AVOID REDD</span>
       </div>
       <button class="cta" id="startBtn" type="button">▶ PLAY NOW</button>
-      <p class="startFoot">One wrong tap ends your run. Can you set a new record?</p>
+      <button class="rankLaunch" id="leaderboardBtn" type="button">🏆 TOP PLAYERS</button>
+      <p class="startFoot">Only completed rounds count toward the leaderboard!</p>
     </div>
   </section>
 
@@ -137,18 +151,31 @@
       <p id="resultDetail">Great collecting!</p>
       <div id="finalScore">0</div>
       <div class="record"><span id="recordLine">BEST: 0 BELLS</span></div>
+      <p id="rankStatus" class="rankStatus">PRACTICE</p>
       <div class="actions">
         <button class="cta" id="againBtn" type="button">↻ PLAY AGAIN</button>
         <button class="cta secondary" id="shareBtn" type="button">↗ SHARE</button>
       </div>
+      <button class="rankLaunch inCard" id="resultRanksBtn" type="button">🏆 VIEW LEADERBOARD</button>
     </div>
   </section>
 
+  <section id="ranksScreen" class="screen" role="dialog" aria-modal="true" aria-labelledby="rankTitle" hidden>
+    <div class="resultCard ranksCard">
+      <h2 id="rankTitle">🏆 TOP PLAYERS</h2>
+      <p id="rankingMessage">Opening leaderboard…</p>
+      <div id="rankList" class="rankList" aria-live="polite"></div>
+      <p id="myRank" class="record"></p>
+      <button class="cta" id="closeRanksBtn" type="button">CLOSE</button>
+    </div>
+  </section>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="config.js"></script>
   <script>
   (() => {
     'use strict';
-    const ROUND_SECONDS = 60;
-    const BEST_KEY = 'bells-village-rush-best-v1';
+    const ROUND_SECONDS = 30;
+    const BEST_KEY = 'bells-village-rush-best-v2';
     const $ = id => document.getElementById(id);
     const field = $('playfield');
     const drops = new Set();
@@ -165,6 +192,54 @@
     let audioCtx = null;
     let finishReason = '';
     let toastTimeout = 0;
+    const tg = window.Telegram?.WebApp;
+    const API_URL = String(window.BELLS_API_URL || '').replace(/\/$/, '');
+    let activeRound = null;
+    let starting = false;
+    let rankedStatus = '';
+    const telegramReady = !!(tg && tg.initData && API_URL);
+
+    function showRankStatus(message) {
+      rankedStatus = message;
+      $('rankStatus').textContent = message;
+    }
+    async function api(path, payload = {}) {
+      if (!telegramReady) throw new Error('Telegram leaderboard is not connected yet');
+      const response = await fetch(API_URL + '/api/' + path, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ ...payload, initData:tg.initData })
+      });
+      const value = await response.json();
+      if (!response.ok || !value.ok) throw new Error(value.error || 'Could not contact rankings');
+      return value;
+    }
+    async function openRanks() {
+      $('ranksScreen').hidden = false;
+      $('rankList').replaceChildren();
+      $('rankingMessage').textContent = telegramReady
+        ? 'Loading Telegram players…'
+        : 'Online rankings become available after you enter via Telegram and the game server is connected.';
+      if (!telegramReady) return;
+      try {
+        const data = await api('leaderboard');
+        $('rankingMessage').textContent = data.scope === 'group' ? '🏘️ GROUP LEADERBOARD' : '🌎 GLOBAL LEADERBOARD';
+        if (!data.top.length) $('rankingMessage').textContent += ' · Be the first!';
+        for (const row of data.top) {
+          const item = document.createElement('div');
+          item.className = 'rankRow';
+          const who = document.createElement('span');
+          who.textContent = row.rank + '. ' + row.name;
+          const points = document.createElement('strong');
+          points.textContent = row.score + ' 🔔';
+          item.append(who,points);
+          $('rankList').appendChild(item);
+        }
+        $('myRank').textContent = data.yourRank ? 'YOUR RANK: #' + data.yourRank + ' · BEST: ' + data.yourBest : 'FINISH A ROUND TO ENTER THE RANKINGS';
+      } catch (error) {
+        $('rankingMessage').textContent = 'Could not load rankings. ' + error.message;
+      }
+    }
 
     try { best = Math.max(0, Number(localStorage.getItem(BEST_KEY)) || 0); } catch (_) {}
 
@@ -244,7 +319,7 @@
       const x = 6 + Math.random() * Math.max(0, field.clientWidth - w - 12);
       const y = -h - 4;
       const elapsed = (performance.now() - startedAt) / 1000;
-      const speed = Math.max(145, innerHeight * .23) + Math.random() * 65 + Math.min(45, elapsed * .7);
+      const speed = Math.max(310, innerHeight * .42) + Math.random() * 140 + Math.min(135, elapsed * 5.3) + (isRedd ? 80 : 0);
       const drop = { el, x, y, w, h, speed, caught: false, wave: Math.random() * 6.28, isRedd };
       const tap = event => {
         event.preventDefault();
@@ -270,7 +345,7 @@
       if (elapsed >= ROUND_SECONDS) { endGame('time'); return; }
       const dt = Math.min(.06, Math.max(0, (now - lastFrame) / 1000));
       lastFrame = now;
-      const interval = elapsed < 20 ? 500 : elapsed < 40 ? 415 : 330;
+      const interval = elapsed < 10 ? 310 : elapsed < 20 ? 250 : 195;
       // Use time targets rather than independently running per-bag timers.
       if (now >= nextBagAt) {
         spawn('bag');
@@ -278,7 +353,7 @@
       }
       if (now >= nextReddAt) {
         spawn('redd');
-        nextReddAt = now + 6500 + Math.random() * 2300;
+        nextReddAt = now + 2400 + Math.random() * 1800;
         toast('🦊 WATCH OUT!');
       }
       for (const drop of drops) {
@@ -289,7 +364,26 @@
       }
       frameId = requestAnimationFrame(tick);
     }
-    function startGame() {
+    async function startGame() {
+      if (playing || starting) return;
+      starting = true;
+      $('startBtn').disabled = true;
+      $('againBtn').disabled = true;
+      activeRound = null;
+      try {
+        if (telegramReady) {
+          const session = await api('round/start');
+          activeRound = session.roundId;
+          showRankStatus('🏆 RANKED TELEGRAM ROUND');
+        } else {
+          showRankStatus('PRACTICE · Leaderboard requires Telegram setup');
+        }
+      } catch (error) {
+        showRankStatus('PRACTICE · Could not connect to leaderboard');
+      }
+      starting = false;
+      $('startBtn').disabled = false;
+      $('againBtn').disabled = false;
       cancelAnimationFrame(frameId);
       roundId += 1;
       playing = false;
@@ -305,8 +399,8 @@
       initAudio();
       startedAt = performance.now();
       lastFrame = startedAt;
-      nextBagAt = startedAt + 350;
-      nextReddAt = startedAt + 5500;
+      nextBagAt = startedAt + 230;
+      nextReddAt = startedAt + 2200;
       playing = true;
       frameId = requestAnimationFrame(tick);
     }
@@ -320,12 +414,13 @@
       clearTimeout(toastTimeout);
       $('toast').classList.remove('show');
       if (reason === 'redd') {
+        if (activeRound) api('round/lose', { roundId: activeRound }).catch(() => {});
         sound(true);
         vibrate([90, 55, 150]);
       } else {
         vibrate(60);
       }
-      const isRecord = score > best;
+      const isRecord = reason === 'time' && score > best;
       if (isRecord) {
         best = score;
         try { localStorage.setItem(BEST_KEY, String(best)); } catch (_) {}
@@ -335,15 +430,23 @@
       $('resultTitle').textContent = reason === 'redd' ? 'REDD GOT YOU!' : "TIME'S UP!";
       $('resultDetail').textContent = reason === 'redd'
         ? 'You tapped Redd! Your round ended immediately.'
-        : 'You survived all 60 seconds in the village!';
+        : 'You survived all 30 seconds in the village!';
       $('finalScore').textContent = String(score) + ' 🔔';
       $('recordLine').textContent = (isRecord ? '✨ NEW RECORD!  ' : 'PERSONAL BEST: ') + best + ' BELLS';
       $('resultScreen').hidden = false;
+      if (reason === 'time' && activeRound) {
+        const submittedRound = activeRound;
+        showRankStatus('⏳ SENDING SCORE TO TELEGRAM…');
+        api('round/finish', { roundId:submittedRound, score }).then(data => {
+          if (submittedRound !== activeRound) return;
+          showRankStatus('🏆 GROUP RANK #' + (data.yourRank || '—') + ' · VERIFIED SCORE');
+        }).catch(() => showRankStatus('⚠ SCORE NOT RANKED · Connection or verification failed'));
+      } else if (reason === 'redd') showRankStatus('🦊 REDD CAUGHT YOU · NOT RANKED');
       $('againBtn').focus();
     }
     async function shareScore() {
       const text = '🔔 I caught ' + score + ' BELLS in Bells Village Rush!'
-        + (finishReason === 'redd' ? ' 🦊 Redd got me!' : ' 🏆 I survived the full 60 seconds!')
+        + (finishReason === 'redd' ? ' 🦊 Redd got me!' : ' 🏆 I survived the full 30 seconds!')
         + '\nCan you beat my score? #BELLS #Bellscoin';
       const url = location.protocol === 'https:' ? location.href : '';
       try {
@@ -357,6 +460,10 @@
       }
     }
     $('startBtn').addEventListener('click', startGame);
+    $('leaderboardBtn').addEventListener('click', openRanks);
+    $('resultRanksBtn').addEventListener('click', openRanks);
+    $('closeRanksBtn').addEventListener('click', () => $('ranksScreen').hidden = true);
+    try { tg?.ready(); tg?.expand(); } catch (_) {}
     $('againBtn').addEventListener('click', startGame);
     $('shareBtn').addEventListener('click', shareScore);
     $('muteBtn').addEventListener('click', () => {
