@@ -139,6 +139,6 @@ export default {
     if(origin && origin!==env.APP_ORIGIN)return json({ok:false,error:'ORIGIN_DENIED'},403);
     if(!env.DB||!env.TELEGRAM_BOT_TOKEN||!env.GROUP_LINK_SECRET)return json({ok:false,error:'SERVER_NOT_CONFIGURED'},503,origin);
     try{return await api(req,env,u.pathname,origin);}
-    catch(e){const code=e?.message||'SERVER_ERROR';const known=/^(INVALID_|EXPIRED_|TELEGRAM_REQUIRED|GROUP_MEMBERS_ONLY|ROUND_ALREADY_USED)$/.test(code);if(!known)console.error('API:',code);return json({ok:false,error:known?code:'SERVER_ERROR'},known?400:500,origin)}
+    catch(e){const code=e?.message||'SERVER_ERROR';const known=/^(INVALID_[A-Z_]+|EXPIRED_LOGIN|TELEGRAM_REQUIRED|GROUP_MEMBERS_ONLY|ROUND_ALREADY_USED)$/.test(code);if(!known)console.error('API:',code);return json({ok:false,error:known?code:'SERVER_ERROR'},known?400:500,origin)}
   }
 };
