@@ -363,9 +363,9 @@
         nextBagAt = now + interval;
       }
       if (now >= nextReddAt) {
-        spawn('redd');
-        // Spawn Redd repeatedly every 2–3 seconds; faster during the final 5-second Turbo.
-        nextReddAt = now + (elapsed >= 25 ? 2000 : 2000) + Math.random() * (elapsed >= 25 ? 500 : 1000);
+        // Three Redd foxes arrive together every 3–4 seconds.
+        for (let i = 0; i < 3; i++) spawn('redd');
+        nextReddAt = now + 3000 + Math.random() * 1000;
       }
       for (const drop of drops) {
         drop.y += drop.speed * dt;
@@ -419,7 +419,7 @@
       lastFrame = startedAt;
       turboAnnounced = false;
       nextBagAt = startedAt + 180;
-      nextReddAt = startedAt + 2000;
+      nextReddAt = startedAt + 3000;
       playing = true;
       frameId = requestAnimationFrame(tick);
     }
