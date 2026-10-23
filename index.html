@@ -183,6 +183,7 @@
     let lastFrame = 0;
     let nextBagAt = 0;
     let nextReddAt = 0;
+    let pendingRedd = [];
     let frameId = 0;
     let roundId = 0;
     let muted = false;
@@ -315,17 +316,17 @@
       const w = isRedd ? Math.min(Math.max(innerWidth * .10, 36), 52) : Math.min(Math.max(innerWidth * .16, 60), 86);
       const h = isRedd ? Math.min(Math.max(innerWidth * .13, 46), 66) : w;
       const maxX = Math.max(6, field.clientWidth - w - 6);
-      let x = isRedd && reddLane >= 0 ? 6 + (maxX - 6) * ((reddLane + .5) / 3) : 6 + Math.random() * Math.max(0, maxX - 6);
+      let x = 6 + Math.random() * Math.max(0, maxX - 6);
       const y = -h - 4;
       const elapsed = (performance.now() - startedAt) / 1000;
       const turbo = elapsed >= ROUND_SECONDS - 5;
       const speed = (batchSpeed ?? (Math.max(330, innerHeight * .42) + Math.random() * 150))
         + Math.min(100, elapsed * 4) + (isRedd ? 85 : 0) + (turbo ? 85 : 0);
       // Three paths: straight, diagonally from left, diagonally from right.
-      const direction = isRedd && reddLane >= 0 ? 0 : isRedd ? Math.floor(Math.random() * 3) : 0;
+      const direction = isRedd && reddLane >= 0 ? (reddLane % 2 === 0 ? 1 : 2) : isRedd ? Math.floor(Math.random() * 3) : 0;
       let vx = 0;
-      if (direction === 1) { x = 6; vx = 110 + Math.random() * 85; }
-      if (direction === 2) { x = maxX; vx = -(110 + Math.random() * 85); }
+      if (direction === 1) { x = 6; vx = 150 + Math.random() * 80; }
+      if (direction === 2) { x = maxX; vx = -(150 + Math.random() * 80); }
       const drop = { el, x, y, w, h, vx, speed, caught: false, wave: Math.random() * 6.28, isRedd };
       const tap = event => {
         event.preventDefault();
@@ -363,10 +364,19 @@
         nextBagAt = now + interval;
       }
       if (now >= nextReddAt) {
-        // Three Redd foxes arrive together every 3–4 seconds.
-        const sharedSpeed = Math.max(330, innerHeight * .42) + Math.random() * 150;
-        for (let i = 0; i < 3; i++) spawn('redd', i, sharedSpeed);
+        // Each wave contains three foxes, staggered by fractions of a second.
+        // Alternate left-to-right and right-to-left, rather than lining them up.
+        const firstDirection = Math.random() < .5 ? 0 : 1;
+        pendingRedd.push(
+          { at:now, lane:firstDirection },
+          { at:now + 240, lane:1 - firstDirection },
+          { at:now + 520, lane:firstDirection }
+        );
         nextReddAt = now + 3000 + Math.random() * 1000;
+      }
+      while (pendingRedd.length && pendingRedd[0].at <= now) {
+        const next = pendingRedd.shift();
+        spawn('redd', next.lane);
       }
       for (const drop of drops) {
         drop.y += drop.speed * dt;
@@ -421,6 +431,7 @@
       turboAnnounced = false;
       nextBagAt = startedAt + 180;
       nextReddAt = startedAt + 3000;
+      pendingRedd = [];
       playing = true;
       frameId = requestAnimationFrame(tick);
     }
