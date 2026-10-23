@@ -28,11 +28,8 @@
     .drop img {width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-drag:none;
       filter:drop-shadow(0 5px 2px #241e1580)}
     .drop.bag:active img {transform:scale(.91)}
-    .drop.redd {width:clamp(82px,20vw,112px);height:clamp(112px,30vw,150px)}
+    .drop.redd {width:clamp(56px,15vw,78px);height:clamp(72px,19vw,96px)}
     .drop.redd img {filter:drop-shadow(0 8px 6px #31160977)}
-    .drop.redd::after {content:"REDD!";position:absolute;bottom:0;left:50%;transform:translateX(-50%);
-      color:#fff;background:#b42e28;border:2px solid #fff2d6;padding:3px 8px;border-radius:12px;
-      font-size:12px;letter-spacing:.08em;font-weight:1000;box-shadow:0 3px 0 #65201b}
     .drop.caught {pointer-events:none;animation:pop .18s ease-out forwards}
     @keyframes pop {to {opacity:0;scale:.4;rotate:16deg}}
     #hud {position:fixed;z-index:12;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;
@@ -120,7 +117,7 @@
   <main id="playfield" aria-label="Falling Bells bags and Redd the fox"></main>
   <header id="hud" hidden>
     <div class="hudCell"><small>🔔 BELLS</small><strong id="score">0</strong></div>
-    <div class="hudCell clock" id="clockBox"><small>⏱ TIME</small><strong id="timer">60</strong></div>
+    <div class="hudCell clock" id="clockBox"><small>⏱ TIME</small><strong id="timer">20</strong></div>
     <button id="muteBtn" type="button" aria-label="Mute sound" title="Toggle sound">🔊</button>
   </header>
   <div id="toast" role="status" aria-live="polite"></div>
@@ -134,7 +131,7 @@
       <h1>BELLS VILLAGE<br>RUSH</h1>
       <p>Grab as many BELLS bags as you can!<br>Watch out for the sneaky fox, Redd.</p>
       <div class="rules">
-        <span class="rule">⏱ 30 SECONDS</span>
+        <span class="rule">⏱ 20 SEC SPRINT</span>
         <span class="rule">💰 TAP THE BAGS</span>
         <span class="rule">🦊 AVOID REDD</span>
       </div>
@@ -174,8 +171,8 @@
   <script>
   (() => {
     'use strict';
-    const ROUND_SECONDS = 30;
-    const BEST_KEY = 'bells-village-rush-best-v2';
+    const ROUND_SECONDS = 20;
+    const BEST_KEY = 'bells-village-rush-best-v3-sprint20';
     const $ = id => document.getElementById(id);
     const field = $('playfield');
     const drops = new Set();
@@ -192,6 +189,7 @@
     let audioCtx = null;
     let finishReason = '';
     let toastTimeout = 0;
+    let turboAnnounced = false;
     const tg = window.Telegram?.WebApp;
     const API_URL = String(window.BELLS_API_URL || '').replace(/\/$/, '');
     let activeRound = null;
@@ -313,14 +311,22 @@
       pic.alt = '';
       pic.draggable = false;
       el.appendChild(pic);
-      // Redd intentionally has the same falling movement as money bags.
-      const w = isRedd ? Math.min(Math.max(innerWidth * .20, 82), 112) : Math.min(Math.max(innerWidth * .16, 60), 86);
-      const h = isRedd ? Math.min(Math.max(innerWidth * .24, 98), 136) : w;
-      const x = 6 + Math.random() * Math.max(0, field.clientWidth - w - 12);
+      // Keep Redd near the bag size so he is recognizable but harder to dodge.
+      const w = isRedd ? Math.min(Math.max(innerWidth * .15, 56), 78) : Math.min(Math.max(innerWidth * .16, 60), 86);
+      const h = isRedd ? Math.min(Math.max(innerWidth * .19, 72), 96) : w;
+      const maxX = Math.max(6, field.clientWidth - w - 6);
+      let x = 6 + Math.random() * Math.max(0, maxX - 6);
       const y = -h - 4;
       const elapsed = (performance.now() - startedAt) / 1000;
-      const speed = Math.max(310, innerHeight * .42) + Math.random() * 140 + Math.min(135, elapsed * 5.3) + (isRedd ? 80 : 0);
-      const drop = { el, x, y, w, h, speed, caught: false, wave: Math.random() * 6.28, isRedd };
+      const turbo = elapsed >= ROUND_SECONDS - 5;
+      const speed = Math.max(390, innerHeight * .48) + Math.random() * 190
+        + Math.min(130, elapsed * 8) + (isRedd ? 100 : 0) + (turbo ? 125 : 0);
+      // Three paths: straight, diagonally from left, diagonally from right.
+      const direction = isRedd ? Math.floor(Math.random() * 3) : 0;
+      let vx = 0;
+      if (direction === 1) { x = 6; vx = 110 + Math.random() * 85; }
+      if (direction === 2) { x = maxX; vx = -(110 + Math.random() * 85); }
+      const drop = { el, x, y, w, h, vx, speed, caught: false, wave: Math.random() * 6.28, isRedd };
       const tap = event => {
         event.preventDefault();
         event.stopPropagation();
@@ -341,11 +347,16 @@
       const elapsed = Math.max(0, (now - startedAt) / 1000);
       const remaining = Math.max(0, Math.ceil(ROUND_SECONDS - elapsed));
       $('timer').textContent = String(remaining);
-      $('clockBox').classList.toggle('urgent', remaining <= 10);
+      $('clockBox').classList.toggle('urgent', remaining <= 5);
+      if (!turboAnnounced && remaining <= 5) {
+        turboAnnounced = true;
+        toast('⚡ TURBO MODE!');
+        vibrate(50);
+      }
       if (elapsed >= ROUND_SECONDS) { endGame('time'); return; }
       const dt = Math.min(.06, Math.max(0, (now - lastFrame) / 1000));
       lastFrame = now;
-      const interval = elapsed < 10 ? 310 : elapsed < 20 ? 250 : 195;
+      const interval = elapsed < 7 ? 260 : elapsed < 15 ? 195 : 135;
       // Use time targets rather than independently running per-bag timers.
       if (now >= nextBagAt) {
         spawn('bag');
@@ -353,12 +364,18 @@
       }
       if (now >= nextReddAt) {
         spawn('redd');
-        nextReddAt = now + 2400 + Math.random() * 1800;
-        toast('🦊 WATCH OUT!');
+        nextReddAt = now + (elapsed >= 15 ? 1000 : 1550) + Math.random() * (elapsed >= 15 ? 800 : 1100);
       }
       for (const drop of drops) {
         drop.y += drop.speed * dt;
-        const sway = Math.sin(elapsed * 3 + drop.wave) * (drop.isRedd ? 5 : 8);
+        if (drop.isRedd) {
+          drop.x += drop.vx * dt;
+          // Bounce at either edge so the fox stays visible, not off screen.
+          const right = Math.max(6, field.clientWidth - drop.w - 6);
+          if (drop.x < 6) { drop.x = 6; drop.vx = Math.abs(drop.vx); }
+          if (drop.x > right) { drop.x = right; drop.vx = -Math.abs(drop.vx); }
+        }
+        const sway = drop.isRedd ? 0 : Math.sin(elapsed * 3 + drop.wave) * 8;
         drop.el.style.transform = 'translate3d(' + (drop.x + sway) + 'px,' + drop.y + 'px,0)';
         if (drop.y > field.clientHeight + 20) removeDrop(drop);
       }
@@ -399,8 +416,9 @@
       initAudio();
       startedAt = performance.now();
       lastFrame = startedAt;
-      nextBagAt = startedAt + 230;
-      nextReddAt = startedAt + 2200;
+      turboAnnounced = false;
+      nextBagAt = startedAt + 180;
+      nextReddAt = startedAt + 1250;
       playing = true;
       frameId = requestAnimationFrame(tick);
     }
@@ -430,7 +448,7 @@
       $('resultTitle').textContent = reason === 'redd' ? 'REDD GOT YOU!' : "TIME'S UP!";
       $('resultDetail').textContent = reason === 'redd'
         ? 'You tapped Redd! Your round ended immediately.'
-        : 'You survived all 30 seconds in the village!';
+        : 'You survived the entire 20-second sprint!';
       $('finalScore').textContent = String(score) + ' 🔔';
       $('recordLine').textContent = (isRecord ? '✨ NEW RECORD!  ' : 'PERSONAL BEST: ') + best + ' BELLS';
       $('resultScreen').hidden = false;
@@ -446,7 +464,7 @@
     }
     async function shareScore() {
       const text = '🔔 I caught ' + score + ' BELLS in Bells Village Rush!'
-        + (finishReason === 'redd' ? ' 🦊 Redd got me!' : ' 🏆 I survived the full 30 seconds!')
+        + (finishReason === 'redd' ? ' 🦊 Redd got me!' : ' 🏆 I survived the full 20-second sprint!')
         + '\nCan you beat my score? #BELLS #Bellscoin';
       const url = location.protocol === 'https:' ? location.href : '';
       try {
@@ -473,7 +491,7 @@
       if (!muted) initAudio();
     });
     // The monotonic timer finishes the round when a suspended tab becomes active again.
-    // Do not falsely award a full 60-second survival when the player simply navigates away.
+    // Do not falsely award survival when the player navigates away.
   })();
   </script>
 </body>
