@@ -325,8 +325,8 @@
       // Three paths: straight, diagonally from left, diagonally from right.
       const direction = isRedd && reddLane >= 0 ? (reddLane % 2 === 0 ? 1 : 2) : isRedd ? Math.floor(Math.random() * 3) : 0;
       let vx = 0;
-      if (direction === 1) { x = 6; vx = 150 + Math.random() * 80; }
-      if (direction === 2) { x = maxX; vx = -(150 + Math.random() * 80); }
+      if (direction === 1) { x = 6; vx = 270 + Math.random() * 75; }
+      if (direction === 2) { x = maxX; vx = -(270 + Math.random() * 75); }
       const drop = { el, x, y, w, h, vx, speed, caught: false, wave: Math.random() * 6.28, isRedd };
       const tap = event => {
         event.preventDefault();
@@ -364,13 +364,13 @@
         nextBagAt = now + interval;
       }
       if (now >= nextReddAt) {
-        // Each wave contains three foxes, staggered by fractions of a second.
+        // Each wave contains three foxes separated by 0.55 seconds; alternate opposing diagonals.
         // Alternate left-to-right and right-to-left, rather than lining them up.
         const firstDirection = Math.random() < .5 ? 0 : 1;
         pendingRedd.push(
           { at:now, lane:firstDirection },
-          { at:now + 240, lane:1 - firstDirection },
-          { at:now + 520, lane:firstDirection }
+          { at:now + 550, lane:1 - firstDirection },
+          { at:now + 1100, lane:firstDirection }
         );
         nextReddAt = now + 3000 + Math.random() * 1000;
       }
