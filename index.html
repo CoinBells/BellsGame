@@ -1,225 +1,498 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Bells Game</title>
-
-<style>
-  :root{
-    --gold:#E9B846;
-    --brown:#3A2405;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; background:#f6eccc; font-family:monospace; overflow:hidden;
-    -webkit-tap-highlight-color:transparent;
-    touch-action:manipulation;
-  }
-
-  #startScreen{
-    position:fixed; inset:0; background:#f6eccc; z-index:50;
-    display:flex; justify-content:center; align-items:center; flex-direction:column;
-  }
-  #startLogo{width:100%; height:100%; object-fit:cover;}
-  #startBtn{
-    position:absolute; bottom:56px;
-    background:var(--gold); color:var(--brown);
-    padding:16px 52px; border:none; border-radius:14px;
-    font-size:24px; font-weight:bold; cursor:pointer;
-  }
-
-  #gameBg{
-    position:fixed; inset:0; width:100%; height:100%;
-    object-fit:cover; z-index:-1;
-  }
-
-  #scoreBox{
-    position:fixed; top:20px; right:20px; z-index:10;
-    background:rgba(255,255,255,.85);
-    padding:15px 22px; border-radius:20px;
-    font-size:21px; font-weight:600; display:none;
-  }
-
-  .bag{
-    position:absolute; width:58px; height:58px;
-    user-select:none; pointer-events:auto;
-    -webkit-user-drag:none;
-    transition:transform .12s;
-  }
-
-  #popup{
-    position:fixed; left:50%; top:50%;
-    transform:translate(-50%,-50%);
-    width:85%; max-width:480px;
-    background:#0d1117; color:#e6edf3;
-    padding:28px; border-radius:18px;
-    display:none; z-index:40;
-  }
-  .btn{
-    width:100%; padding:14px; margin-top:14px;
-    background:var(--gold); color:var(--brown);
-    border:none; border-radius:12px;
-    font-size:20px; font-weight:bold; cursor:pointer;
-  }
-
-  #footer{
-    position:fixed; bottom:16px; left:50%;
-    transform:translateX(-50%); font-size:16px; font-weight:bold;
-  }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="theme-color" content="#234b38">
+  <meta name="description" content="30 seconds. Fast BELLS bags. Dodge Redd and claim the Telegram leaderboard!">
+  <title>Bells Village Rush | Bellscoin Arcade</title>
+  <style>
+    :root {
+      --cream:#fff3d4; --ink:#332717; --green:#245b43; --gold:#f6c453;
+      --shadow:0 8px 0 #65442b, 0 14px 28px #211b1350;
+      font-family:system-ui,-apple-system,"Trebuchet MS",sans-serif; color:var(--ink);
+    }
+    *,*::before,*::after {box-sizing:border-box}
+    html,body {width:100%;height:100%;margin:0;overflow:hidden}
+    body {background:#8cb878;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+    button {font:inherit;cursor:pointer}
+    button:focus-visible {outline:4px solid #fff;outline-offset:4px}
+    [hidden] {display:none!important}
+    #gameBg,.sceneTint {position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+    #gameBg {object-fit:cover;z-index:0}
+    .sceneTint {z-index:1;background:linear-gradient(180deg,#122a2140 0%,transparent 28%,transparent 70%,#1329164d 100%)}
+    #playfield {position:fixed;inset:0;overflow:hidden;z-index:5;pointer-events:none}
+    .drop {position:absolute;left:0;top:0;width:clamp(60px,16vw,86px);height:clamp(60px,16vw,86px);
+      border:0;padding:2px;background:none;touch-action:manipulation;pointer-events:auto;
+      will-change:transform;display:grid;place-items:center;transform:translate3d(-200px,-200px,0);user-select:none}
+    .drop img {width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-drag:none;
+      filter:drop-shadow(0 5px 2px #241e1580)}
+    .drop.bag:active img {transform:scale(.91)}
+    .drop.redd {width:clamp(56px,15vw,78px);height:clamp(72px,19vw,96px)}
+    .drop.redd img {filter:drop-shadow(0 8px 6px #31160977)}
+    .drop.caught {pointer-events:none;animation:pop .18s ease-out forwards}
+    @keyframes pop {to {opacity:0;scale:.4;rotate:16deg}}
+    #hud {position:fixed;z-index:12;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;
+      display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}
+    .hudCell {background:#fffae9f0;border:3px solid #6a512e;border-radius:19px;box-shadow:0 5px 0 #513b2a88;
+      text-align:center;padding:6px 13px;min-width:91px;backdrop-filter:blur(5px)}
+    .hudCell strong {font-size:clamp(22px,5.5vw,30px);line-height:1.1;display:block;font-variant-numeric:tabular-nums}
+    .hudCell small {display:block;font-weight:900;letter-spacing:.08em;font-size:10px}
+    .hudCell.clock {background:#245b43ee;color:#fff8e4;border-color:#e9d18b}
+    .hudCell.clock.urgent {background:#bd4138;animation:heartbeat .65s infinite alternate}
+    @keyframes heartbeat {to{scale:1.05}}
+    #muteBtn {pointer-events:auto;align-self:center;min-width:44px;min-height:44px;background:#fff9e9e8;
+      border:2px solid #60492a;border-radius:50%;font-size:21px;box-shadow:0 3px 0 #5b4028aa}
+    #toast {position:fixed;z-index:16;top:27%;left:50%;transform:translate(-50%,-50%);
+      font-size:clamp(22px,5vw,32px);font-weight:1000;color:#fff;text-shadow:0 3px 1px #4c2e1f,0 0 13px #4c2e1f;
+      white-space:nowrap;pointer-events:none;opacity:0}
+    #toast.show {animation:floatUp .7s ease-out both}
+    @keyframes floatUp {0%{opacity:0;transform:translate(-50%,4px) scale(.7)}15%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-42px) scale(1.17)}}
+    #footer {position:fixed;z-index:8;bottom:max(8px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+      background:#203d32c9;color:#ffefc1;font-size:11px;font-weight:900;letter-spacing:.09em;
+      padding:7px 15px;border-radius:30px;white-space:nowrap;pointer-events:none}
+    .screen {position:fixed;inset:0;z-index:50;display:flex;justify-content:center;align-items:flex-end;
+      padding:20px 16px max(28px,env(safe-area-inset-bottom))}
+    #startScreen {background:#abc88d}
+    #startLogo {position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .posterScrim {position:absolute;inset:0;background:linear-gradient(180deg,#10291825 0%,#17351e22 35%,#152719d9 100%)}
+    .startPanel {position:relative;text-align:center;max-width:460px;width:100%;color:#fff8dc;
+      text-shadow:0 2px 0 #3e3025;animation:enter .4s ease-out}
+    @keyframes enter {from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .eyebrow {display:inline-block;background:#f5c34e;color:#382b18;text-shadow:none;
+      border:3px solid #fff8dd;box-shadow:0 4px 0 #674927;padding:6px 14px;border-radius:22px;
+      font-weight:1000;letter-spacing:.12em;font-size:12px}
+    .startPanel h1 {margin:14px 0 7px;font-size:clamp(30px,7vw,47px);line-height:1.06;
+      color:#ffdb6e;-webkit-text-stroke:.5px #52361e;text-shadow:0 4px 0 #68432a,0 5px 10px #0008}
+    .startPanel p {font-size:clamp(13px,3.5vw,16px);font-weight:800;line-height:1.5;margin:12px 0 18px}
+    .rules {display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+    .rule {background:#fff6e6ed;color:#3b3526;text-shadow:none;padding:8px 10px;border-radius:14px;
+      font-size:12px;font-weight:900;border:2px solid #e9c16a}
+    .cta {width:100%;min-height:58px;border:3px solid #4c3422;border-radius:18px;background:#f6c453;
+      box-shadow:var(--shadow);color:#392512;font-weight:1000;letter-spacing:.06em;font-size:22px}
+    .cta:active {transform:translateY(5px);box-shadow:0 3px 0 #65442b}
+    .startFoot {font-size:12px!important;margin-top:17px!important}
+    #resultScreen {z-index:60;align-items:center;background:#132b23b8;backdrop-filter:blur(6px);padding:16px}
+    .resultCard {width:min(100%,430px);background:var(--cream);border:5px solid #5c4327;border-radius:26px;
+      box-shadow:0 13px 0 #37291e,0 22px 35px #07170f88;padding:24px 21px 22px;text-align:center;position:relative}
+    .resultCard::before {content:"";position:absolute;inset:9px;border:2px dashed #d8af5d;border-radius:16px;pointer-events:none}
+    .resultCard .icon {font-size:54px;display:block;line-height:1.1}
+    .resultCard h2 {font-size:clamp(24px,6vw,32px);margin:8px 0 5px;color:#235b42}
+    #resultDetail {font-weight:800;line-height:1.5;margin:8px 0 15px}
+    #finalScore {font-size:clamp(48px,13vw,68px);color:#b98224;font-weight:1000;line-height:1}
+    .record {font-size:13px;font-weight:900;margin:11px 0 22px}
+    .actions {display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative}
+    .actions .cta {font-size:15px;min-height:52px}
+    .secondary {background:#fffdf4;box-shadow:0 6px 0 #775939}
+    .danger h2 {color:#b3332e}
+    .rankLaunch {margin-top:14px;padding:12px 16px;width:100%;border:2px solid #ffdc85;
+      border-radius:16px;background:#153d31e8;color:#fff6d9;font-weight:900;font-size:15px;
+      box-shadow:0 4px 0 #392915;cursor:pointer}
+    .inCard {position:relative;margin-top:17px}
+    .rankStatus {position:relative;background:#e6d7ad;padding:9px;border-radius:12px;
+      font-size:12px;font-weight:900}
+    #ranksScreen {z-index:80;align-items:center;background:#182a23c9;backdrop-filter:blur(5px)}
+    .ranksCard {max-height:min(85vh,740px);overflow:auto}
+    .rankList {position:relative;display:grid;gap:7px;margin:18px 0}
+    .rankRow {display:flex;justify-content:space-between;gap:8px;align-items:center;
+      border:2px solid #d9b571;background:#fffaf0;border-radius:12px;padding:11px 12px;font-size:14px;text-align:left}
+    .rankRow span {overflow-wrap:anywhere}
+    #rankingMessage {position:relative;font-size:13px;font-weight:700}
+    @media (max-height:650px) {
+      .startPanel h1 {font-size:27px;margin:8px 0 4px}
+      .startPanel p {font-size:12px;margin:7px 0 10px}
+      .rules {margin-bottom:10px}
+      .cta {min-height:47px}
+      .startFoot {margin-top:11px!important}
+      .resultCard {padding:14px}
+    }
+    @media (prefers-reduced-motion:reduce) {
+      .startPanel,.drop.caught,#toast.show,.hudCell.clock.urgent {animation:none}
+    }
+  </style>
 </head>
-
 <body>
+  <img id="gameBg" src="images/TOM.PNG" alt="" aria-hidden="true">
+  <div class="sceneTint" aria-hidden="true"></div>
+  <main id="playfield" aria-label="Falling Bells bags and Redd the fox"></main>
+  <header id="hud" hidden>
+    <div class="hudCell"><small>🔔 BELLS</small><strong id="score">0</strong></div>
+    <div class="hudCell clock" id="clockBox"><small>⏱ TIME</small><strong id="timer">30</strong></div>
+    <button id="muteBtn" type="button" aria-label="Mute sound" title="Toggle sound">🔊</button>
+  </header>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="footer">BELLSCOIN ARCADE · BY @AMJ_BTC</div>
 
-<!-- شاشة البداية -->
-<div id="startScreen">
-  <img id="startLogo" src="images/BELLSLOGO.PNG">
-  <button id="startBtn">START</button>
-</div>
+  <section id="startScreen" class="screen" aria-label="Game menu">
+    <img id="startLogo" src="images/BELLSLOGO.PNG" alt="Bellscoin village game artwork">
+    <div class="posterScrim"></div>
+    <div class="startPanel">
+      <span class="eyebrow">🔔 BELLSCOIN ARCADE</span>
+      <h1>BELLS VILLAGE<br>RUSH</h1>
+      <p>Grab as many BELLS bags as you can!<br>Watch out for the sneaky fox, Redd.</p>
+      <div class="rules">
+        <span class="rule">⏱ 30 SEC CHALLENGE</span>
+        <span class="rule">💰 TAP THE BAGS</span>
+        <span class="rule">🦊 AVOID REDD</span>
+      </div>
+      <button class="cta" id="startBtn" type="button">▶ PLAY NOW</button>
+      <button class="rankLaunch" id="leaderboardBtn" type="button">🏆 TOP PLAYERS</button>
+      <p class="startFoot">Only completed rounds count toward the leaderboard!</p>
+    </div>
+  </section>
 
-<img id="gameBg" src="images/TOM.PNG">
+  <section id="resultScreen" class="screen" role="dialog" aria-modal="true" aria-labelledby="resultTitle" hidden>
+    <div id="resultCard" class="resultCard">
+      <span class="icon" id="resultIcon" aria-hidden="true">🏆</span>
+      <h2 id="resultTitle">TIME'S UP!</h2>
+      <p id="resultDetail">Great collecting!</p>
+      <div id="finalScore">0</div>
+      <div class="record"><span id="recordLine">BEST: 0 BELLS</span></div>
+      <p id="rankStatus" class="rankStatus">PRACTICE</p>
+      <div class="actions">
+        <button class="cta" id="againBtn" type="button">↻ PLAY AGAIN</button>
+        <button class="cta secondary" id="shareBtn" type="button">↗ SHARE</button>
+      </div>
+      <button class="rankLaunch inCard" id="resultRanksBtn" type="button">🏆 VIEW LEADERBOARD</button>
+    </div>
+  </section>
 
-<div id="scoreBox">
-  Bells: <span id="score">0</span> — Time: <span id="timer">5</span>s
-</div>
+  <section id="ranksScreen" class="screen" role="dialog" aria-modal="true" aria-labelledby="rankTitle" hidden>
+    <div class="resultCard ranksCard">
+      <h2 id="rankTitle">🏆 TOP PLAYERS</h2>
+      <p id="rankingMessage">Opening leaderboard…</p>
+      <div id="rankList" class="rankList" aria-live="polite"></div>
+      <p id="myRank" class="record"></p>
+      <button class="cta" id="closeRanksBtn" type="button">CLOSE</button>
+    </div>
+  </section>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="config.js"></script>
+  <script>
+  (() => {
+    'use strict';
+    const ROUND_SECONDS = 30;
+    const BEST_KEY = 'bells-village-rush-best-v4-challenge30';
+    const $ = id => document.getElementById(id);
+    const field = $('playfield');
+    const drops = new Set();
+    let score = 0;
+    let best = 0;
+    let playing = false;
+    let startedAt = 0;
+    let lastFrame = 0;
+    let nextBagAt = 0;
+    let nextReddAt = 0;
+    let frameId = 0;
+    let roundId = 0;
+    let muted = false;
+    let audioCtx = null;
+    let finishReason = '';
+    let toastTimeout = 0;
+    let turboAnnounced = false;
+    const tg = window.Telegram?.WebApp;
+    const API_URL = String(window.BELLS_API_URL || '').replace(/\/$/, '');
+    let activeRound = null;
+    let starting = false;
+    let rankedStatus = '';
+    const telegramReady = !!(tg && tg.initData && API_URL);
 
-<div id="popup">
-  <h2>BellsChain</h2>
-  BellsCoin is a Scrypt-based PoW chain with merged mining via LTC & DOGE.<br><br>
-  Listed on:<br>
-  – Nintondo.io<br>
-  – NONKYC.io<br>
-  – Gate.io<br>
-  – MEXC<br><br>
-
-  <b>Your Performance:</b><br>
-  <span id="performance"></span><br><br>
-
-  <button class="btn" id="closeBtn">Close</button>
-  <button class="btn" id="againBtn">Again</button>
-</div>
-
-<div id="footer">BY: @AMJ_BTC</div>
-
-<script>
-let score = 0;
-let timeLeft = 5;
-let timerInterval = null;
-let bagInterval = null;
-let playing = false;
-
-/* صوت بسيط */
-let audioCtx = null;
-function initAudio(){
-  if(!audioCtx){
-    const AC = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AC();
-  }
-}
-function playCoin(){
-  if(!audioCtx) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = "square";
-  o.frequency.setValueAtTime(1200, audioCtx.currentTime);
-  o.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.12);
-  g.gain.setValueAtTime(0.12, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.13);
-  o.connect(g).connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime + 0.14);
-}
-
-/* الحقيبة */
-function catchBag(img){
-  if(img.dataset.caught === "1") return; // ✅ يمنع التكرار
-  img.dataset.caught = "1";             // ✅ أول لمسة فقط
-
-  score++;
-  document.getElementById("score").textContent = score;
-
-  playCoin();
-
-  img.style.transform = "scale(0.25)";
-  setTimeout(()=> img.remove(), 120);
-}
-
-/* إضافة حدث واحد فقط */
-function makeInteractive(img){
-  img.addEventListener("pointerdown", (e)=>{
-    e.preventDefault();
-    catchBag(img);
-  }, {passive:false});
-}
-
-/* إنزال الحقائب */
-function spawnBag(){
-  const img = document.createElement("img");
-  img.src = "images/BELLS.PNG";
-  img.className = "bag";
-
-  img.style.left = Math.random() * (window.innerWidth - 60) + "px";
-  img.style.top = "-80px";
-
-  makeInteractive(img);
-  document.body.appendChild(img);
-
-  const fall = setInterval(()=>{
-    img.style.top = (img.offsetTop + 6) + "px";
-    if(img.offsetTop > window.innerHeight){
-      clearInterval(fall);
-      img.remove();
+    function showRankStatus(message) {
+      rankedStatus = message;
+      $('rankStatus').textContent = message;
     }
-    if(!playing){
-      clearInterval(fall);
-      img.remove();
+    async function api(path, payload = {}) {
+      if (!telegramReady) throw new Error('Telegram leaderboard is not connected yet');
+      const response = await fetch(API_URL + '/api/' + path, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ ...payload, initData:tg.initData })
+      });
+      const value = await response.json();
+      if (!response.ok || !value.ok) throw new Error(value.error || 'Could not contact rankings');
+      return value;
     }
-  },20);
-}
+    async function openRanks() {
+      $('ranksScreen').hidden = false;
+      $('rankList').replaceChildren();
+      $('rankingMessage').textContent = telegramReady
+        ? 'Loading Telegram players…'
+        : 'Online rankings become available after you enter via Telegram and the game server is connected.';
+      if (!telegramReady) return;
+      try {
+        const data = await api('leaderboard');
+        $('rankingMessage').textContent = data.scope === 'group' ? '🏘️ GROUP LEADERBOARD' : '🌎 GLOBAL LEADERBOARD';
+        if (!data.top.length) $('rankingMessage').textContent += ' · Be the first!';
+        for (const row of data.top) {
+          const item = document.createElement('div');
+          item.className = 'rankRow';
+          const who = document.createElement('span');
+          who.textContent = row.rank + '. ' + row.name;
+          const points = document.createElement('strong');
+          points.textContent = row.score + ' 🔔';
+          item.append(who,points);
+          $('rankList').appendChild(item);
+        }
+        $('myRank').textContent = data.yourRank ? 'YOUR RANK: #' + data.yourRank + ' · BEST: ' + data.yourBest : 'FINISH A ROUND TO ENTER THE RANKINGS';
+      } catch (error) {
+        $('rankingMessage').textContent = 'Could not load rankings. ' + error.message;
+      }
+    }
 
-/* بدء اللعبة */
-function startGame(){
-  initAudio();
+    try { best = Math.max(0, Number(localStorage.getItem(BEST_KEY)) || 0); } catch (_) {}
 
-  const s = document.getElementById("startScreen");
-  s.style.opacity = "0";
-  s.style.pointerEvents = "none";
-  setTimeout(()=> s.style.display = "none", 250);
-
-  document.getElementById("scoreBox").style.display = "block";
-
-  score = 0; timeLeft = 5; playing = true;
-  document.getElementById("score").textContent = score;
-  document.getElementById("timer").textContent = timeLeft;
-
-  timerInterval = setInterval(()=>{
-    timeLeft--;
-    document.getElementById("timer").textContent = timeLeft;
-    if(timeLeft <= 0) endGame();
-  },1000);
-
-  bagInterval = setInterval(spawnBag, 350);
-}
-
-/* نهاية اللعبة */
-function endGame(){
-  playing = false;
-  clearInterval(timerInterval);
-  clearInterval(bagInterval);
-
-  let perf = "Weak 💀";
-  if(score >= 10) perf = "Excellent 🔥";
-  else if(score >= 5) perf = "Good ✅";
-
-  document.getElementById("performance").textContent = perf;
-  document.getElementById("popup").style.display = "block";
-}
-
-document.getElementById("startBtn").onclick = startGame;
-document.getElementById("closeBtn").onclick = ()=> document.getElementById("popup").style.display = "none";
-document.getElementById("againBtn").onclick = ()=>{ document.getElementById("popup").style.display = "none"; startGame(); };
-</script>
-
+    function initAudio() {
+      if (muted) return;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC && !audioCtx) audioCtx = new AC();
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      } catch (_) {}
+    }
+    function sound(bad = false) {
+      if (muted || !audioCtx) return;
+      try {
+        const t = audioCtx.currentTime;
+        const oscillator = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        oscillator.type = bad ? 'sawtooth' : 'square';
+        oscillator.frequency.setValueAtTime(bad ? 460 : 880, t);
+        oscillator.frequency.exponentialRampToValueAtTime(bad ? 110 : 1320, t + (bad ? .28 : .11));
+        gain.gain.setValueAtTime(.08, t);
+        gain.gain.exponentialRampToValueAtTime(.001, t + (bad ? .3 : .13));
+        oscillator.connect(gain).connect(audioCtx.destination);
+        oscillator.start(t);
+        oscillator.stop(t + (bad ? .31 : .14));
+      } catch (_) {}
+    }
+    function vibrate(pattern) {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+    function toast(text) {
+      const el = $('toast');
+      el.textContent = text;
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => el.classList.remove('show'), 740);
+    }
+    function clearDrops() {
+      for (const drop of drops) drop.el.remove();
+      drops.clear();
+    }
+    function removeDrop(drop) {
+      if (!drops.has(drop)) return;
+      drops.delete(drop);
+      drop.el.remove();
+    }
+    function updateScore() { $('score').textContent = String(score); }
+    function collect(drop) {
+      if (!playing || drop.caught || !drops.has(drop)) return;
+      drop.caught = true;
+      drop.el.disabled = true;
+      drop.el.classList.add('caught');
+      drops.delete(drop);
+      score += 1;
+      updateScore();
+      sound();
+      if (score % 10 === 0) toast('🔔 ' + score + ' BELLS!');
+      setTimeout(() => drop.el.remove(), 190);
+    }
+    function spawn(type = 'bag') {
+      if (!playing || drops.size >= 34) return;
+      const isRedd = type === 'redd';
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'drop ' + type;
+      el.setAttribute('aria-label', isRedd ? 'Redd! Avoid tapping' : 'Catch Bells bag');
+      const pic = document.createElement('img');
+      pic.src = isRedd ? 'images/redd.webp' : 'images/BELLS.PNG';
+      pic.alt = '';
+      pic.draggable = false;
+      el.appendChild(pic);
+      // Keep Redd near the bag size so he is recognizable but harder to dodge.
+      const w = isRedd ? Math.min(Math.max(innerWidth * .15, 56), 78) : Math.min(Math.max(innerWidth * .16, 60), 86);
+      const h = isRedd ? Math.min(Math.max(innerWidth * .19, 72), 96) : w;
+      const maxX = Math.max(6, field.clientWidth - w - 6);
+      let x = 6 + Math.random() * Math.max(0, maxX - 6);
+      const y = -h - 4;
+      const elapsed = (performance.now() - startedAt) / 1000;
+      const turbo = elapsed >= ROUND_SECONDS - 5;
+      const speed = Math.max(330, innerHeight * .42) + Math.random() * 150
+        + Math.min(100, elapsed * 4) + (isRedd ? 85 : 0) + (turbo ? 85 : 0);
+      // Three paths: straight, diagonally from left, diagonally from right.
+      const direction = isRedd ? Math.floor(Math.random() * 3) : 0;
+      let vx = 0;
+      if (direction === 1) { x = 6; vx = 110 + Math.random() * 85; }
+      if (direction === 2) { x = maxX; vx = -(110 + Math.random() * 85); }
+      const drop = { el, x, y, w, h, vx, speed, caught: false, wave: Math.random() * 6.28, isRedd };
+      const tap = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!playing || drop.caught) return;
+        if (isRedd) endGame('redd');
+        else collect(drop);
+      };
+      el.addEventListener('pointerdown', tap, { passive:false });
+      el.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') tap(event);
+      });
+      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+      drops.add(drop);
+      field.appendChild(el);
+    }
+    function tick(now) {
+      if (!playing) return;
+      const elapsed = Math.max(0, (now - startedAt) / 1000);
+      const remaining = Math.max(0, Math.ceil(ROUND_SECONDS - elapsed));
+      $('timer').textContent = String(remaining);
+      $('clockBox').classList.toggle('urgent', remaining <= 5);
+      if (!turboAnnounced && remaining <= 5) {
+        turboAnnounced = true;
+        toast('⚡ TURBO MODE!');
+        vibrate(50);
+      }
+      if (elapsed >= ROUND_SECONDS) { endGame('time'); return; }
+      const dt = Math.min(.06, Math.max(0, (now - lastFrame) / 1000));
+      lastFrame = now;
+      const interval = elapsed < 10 ? 320 : elapsed < 25 ? 245 : 180;
+      // Use time targets rather than independently running per-bag timers.
+      if (now >= nextBagAt) {
+        spawn('bag');
+        nextBagAt = now + interval;
+      }
+      if (now >= nextReddAt) {
+        spawn('redd');
+        nextReddAt = now + (elapsed >= 25 ? 1150 : 1750) + Math.random() * (elapsed >= 25 ? 900 : 1200);
+      }
+      for (const drop of drops) {
+        drop.y += drop.speed * dt;
+        if (drop.isRedd) {
+          drop.x += drop.vx * dt;
+          // Bounce at either edge so the fox stays visible, not off screen.
+          const right = Math.max(6, field.clientWidth - drop.w - 6);
+          if (drop.x < 6) { drop.x = 6; drop.vx = Math.abs(drop.vx); }
+          if (drop.x > right) { drop.x = right; drop.vx = -Math.abs(drop.vx); }
+        }
+        const sway = drop.isRedd ? 0 : Math.sin(elapsed * 3 + drop.wave) * 8;
+        drop.el.style.transform = 'translate3d(' + (drop.x + sway) + 'px,' + drop.y + 'px,0)';
+        if (drop.y > field.clientHeight + 20) removeDrop(drop);
+      }
+      frameId = requestAnimationFrame(tick);
+    }
+    async function startGame() {
+      if (playing || starting) return;
+      starting = true;
+      $('startBtn').disabled = true;
+      $('againBtn').disabled = true;
+      activeRound = null;
+      try {
+        if (telegramReady) {
+          const session = await api('round/start');
+          activeRound = session.roundId;
+          showRankStatus('🏆 RANKED TELEGRAM ROUND');
+        } else {
+          showRankStatus('PRACTICE · Leaderboard requires Telegram setup');
+        }
+      } catch (error) {
+        showRankStatus('PRACTICE · Could not connect to leaderboard');
+      }
+      starting = false;
+      $('startBtn').disabled = false;
+      $('againBtn').disabled = false;
+      cancelAnimationFrame(frameId);
+      roundId += 1;
+      playing = false;
+      clearDrops();
+      score = 0;
+      finishReason = '';
+      updateScore();
+      $('timer').textContent = String(ROUND_SECONDS);
+      $('clockBox').classList.remove('urgent');
+      $('startScreen').hidden = true;
+      $('resultScreen').hidden = true;
+      $('hud').hidden = false;
+      initAudio();
+      startedAt = performance.now();
+      lastFrame = startedAt;
+      turboAnnounced = false;
+      nextBagAt = startedAt + 180;
+      nextReddAt = startedAt + 1250;
+      playing = true;
+      frameId = requestAnimationFrame(tick);
+    }
+    function endGame(reason) {
+      if (!playing) return;
+      playing = false;
+      finishReason = reason;
+      cancelAnimationFrame(frameId);
+      clearDrops();
+      $('hud').hidden = true;
+      clearTimeout(toastTimeout);
+      $('toast').classList.remove('show');
+      if (reason === 'redd') {
+        if (activeRound) api('round/lose', { roundId: activeRound }).catch(() => {});
+        sound(true);
+        vibrate([90, 55, 150]);
+      } else {
+        vibrate(60);
+      }
+      const isRecord = reason === 'time' && score > best;
+      if (isRecord) {
+        best = score;
+        try { localStorage.setItem(BEST_KEY, String(best)); } catch (_) {}
+      }
+      $('resultCard').classList.toggle('danger', reason === 'redd');
+      $('resultIcon').textContent = reason === 'redd' ? '🦊' : '🏆';
+      $('resultTitle').textContent = reason === 'redd' ? 'REDD GOT YOU!' : "TIME'S UP!";
+      $('resultDetail').textContent = reason === 'redd'
+        ? 'You tapped Redd! Your round ended immediately.'
+        : 'You survived the full 30-second challenge!';
+      $('finalScore').textContent = String(score) + ' 🔔';
+      $('recordLine').textContent = (isRecord ? '✨ NEW RECORD!  ' : 'PERSONAL BEST: ') + best + ' BELLS';
+      $('resultScreen').hidden = false;
+      if (reason === 'time' && activeRound) {
+        const submittedRound = activeRound;
+        showRankStatus('⏳ SENDING SCORE TO TELEGRAM…');
+        api('round/finish', { roundId:submittedRound, score }).then(data => {
+          if (submittedRound !== activeRound) return;
+          showRankStatus('🏆 GROUP RANK #' + (data.yourRank || '—') + ' · VERIFIED SCORE');
+        }).catch(() => showRankStatus('⚠ SCORE NOT RANKED · Connection or verification failed'));
+      } else if (reason === 'redd') showRankStatus('🦊 REDD CAUGHT YOU · NOT RANKED');
+      $('againBtn').focus();
+    }
+    async function shareScore() {
+      const text = '🔔 I caught ' + score + ' BELLS in Bells Village Rush!'
+        + (finishReason === 'redd' ? ' 🦊 Redd got me!' : ' 🏆 I survived the full 30-second challenge!')
+        + '\nCan you beat my score? #BELLS #Bellscoin';
+      const url = location.protocol === 'https:' ? location.href : '';
+      try {
+        if (navigator.share) await navigator.share({ title:'Bells Village Rush', text, ...(url ? {url} : {}) });
+        else if (navigator.clipboard) {
+          await navigator.clipboard.writeText(text + (url ? '\n' + url : ''));
+          toast('RESULT COPIED!');
+        } else toast('SHARING UNAVAILABLE');
+      } catch (error) {
+        if (error && error.name !== 'AbortError') toast('COULD NOT SHARE');
+      }
+    }
+    $('startBtn').addEventListener('click', startGame);
+    $('leaderboardBtn').addEventListener('click', openRanks);
+    $('resultRanksBtn').addEventListener('click', openRanks);
+    $('closeRanksBtn').addEventListener('click', () => $('ranksScreen').hidden = true);
+    try { tg?.ready(); tg?.expand(); } catch (_) {}
+    $('againBtn').addEventListener('click', startGame);
+    $('shareBtn').addEventListener('click', shareScore);
+    $('muteBtn').addEventListener('click', () => {
+      muted = !muted;
+      $('muteBtn').textContent = muted ? '🔇' : '🔊';
+      $('muteBtn').setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
+      if (!muted) initAudio();
+    });
+    // The monotonic timer finishes the round when a suspended tab becomes active again.
+    // Do not falsely award survival when the player navigates away.
+  })();
+  </script>
 </body>
 </html>
