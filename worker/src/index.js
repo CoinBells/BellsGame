@@ -1,7 +1,7 @@
 // Bells Village Rush — Cloudflare Worker + D1 backend
 // Keep your bot token in Worker secrets, NEVER in GitHub Pages or client JS.
 const te = new TextEncoder();
-const ROUND_MS = 30000, MAX_SCORE = 125;
+const ROUND_MS = 20000, MAX_SCORE = 125;
 const json = (v,status=200,origin='') => new Response(JSON.stringify(v), {
   status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...(origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin'}:{})}
 });
@@ -113,14 +113,14 @@ async function handleTelegram(update,env) {
   const param=isGroup?'g_'+id+'_'+await groupSignature(id,env):'global';
   const bot=env.BOT_USERNAME||'BellsCoinGameBot';
   const link='https://t.me/'+bot+'?startapp='+encodeURIComponent(param);
-  const buttons=[[{text:'🎮 PLAY NOW · 30 SECONDS',url:link}]];
+  const buttons=[[{text:'🎮 PLAY NOW · 20 SECONDS',url:link}]];
   if(cmd==='/top'||cmd==='/leaderboard'){
     const board=await ranks(env.DB,scope,'');
     const lines=board.top.length?board.top.map(v=>v.rank+'. '+escapeHTML(v.name)+' — <b>'+v.score+' 🔔</b>').join('\n'):'No scores yet — be the first!';
     return send(env,id,'🏆 <b>BELLS VILLAGE RUSH · TOP 10</b>\n'+(isGroup?'This group':'Global')+'\n\n'+lines,buttons);
   }
-  if(cmd==='/help')return send(env,id,'🔔 <b>Bells Village Rush</b>\n/play — Challenge the group\n/top — Top 10 players\n\n⏱ 30 seconds, catch BELLS bags, avoid Redd.',buttons);
-  return send(env,id,'🔔 <b>THE BELLS CHALLENGE IS ON!</b>\n⏱ 30 seconds · 💰 Fast bags · 🦊 Avoid Redd!\nPlay to get your name on the '+(isGroup?'group':'global')+' leaderboard.',buttons);
+  if(cmd==='/help')return send(env,id,'🔔 <b>Bells Village Rush</b>\n/play — Challenge the group\n/top — Top 10 players\n\n⏱ 20 seconds, catch BELLS bags, avoid Redd.',buttons);
+  return send(env,id,'🔔 <b>THE BELLS CHALLENGE IS ON!</b>\n⏱ 20 seconds · ⚡ Turbo finale · 💰 Fast bags · 🦊 Avoid Redd!\nPlay to get your name on the '+(isGroup?'group':'global')+' leaderboard.',buttons);
 }
 export default {
   async fetch(req,env,ctx) {
