@@ -1,0 +1,14 @@
+// Copy to worker/wrangler.toml and add your own D1 database_id.
+// Do not commit any secrets or your Telegram bot token.
+name = "bells-village-rush-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+APP_ORIGIN = "https://coinbells.github.io"
+BOT_USERNAME = "BellsCoinGameBot"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bells-village-rush"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
