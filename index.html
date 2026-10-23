@@ -365,9 +365,8 @@
       $('muteBtn').setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
       if (!muted) initAudio();
     });
-    window.addEventListener('pagehide', () => {
-      if (playing) endGame('time');
-    });
+    // The monotonic timer finishes the round when a suspended tab becomes active again.
+    // Do not falsely award a full 60-second survival when the player simply navigates away.
   })();
   </script>
 </body>
