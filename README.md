@@ -1,6 +1,6 @@
-# 🔔 Bells Village Rush — 30-Second Telegram Challenge
+# 🔔 Bells Village Rush — 20-Second Turbo Sprint
 
-A fast-paced arcade game for the Bellscoin community. Catch BELLS bags, avoid Redd, survive 30 seconds and compete in your Telegram group.
+A fast-paced arcade game for the Bellscoin community. Catch BELLS bags, avoid Redd, survive 20 seconds and compete in your Telegram group.
 
 ## Quick start
 
@@ -9,11 +9,12 @@ A fast-paced arcade game for the Bellscoin community. Catch BELLS bags, avoid Re
 
 ## New rules
 
-- 30-second rounds (previously 60).
-- Bag drops start fast and accelerate at 10 and 20 seconds.
-- Redd first appears around 2.2 seconds in, then every 2.4–4.2 seconds. Redd falls faster than bags.
+- 20-second rounds, replacing the 30-second preview (original game was 60 seconds).
+- BELLS bags appear every ~260ms at first, ~195ms after 7 seconds, and ~135ms during the final 5-second Turbo Mode; they fall much faster.
+- Smaller Redd (close to bag size) first appears around 1.25 seconds; then every ~1.55–2.65 seconds, accelerating to ~1–1.8 seconds during Turbo Mode. He can fall straight or diagonally from either side and bounce off screen edges.
 - One wrong tap on Redd immediately ends the round. **Failed rounds are not ranked.**
-- No 12-bag limit. Finish all 30 seconds to qualify for the leaderboard.
+- Timer, share messages, group bot commands and backend verification now all use **20 seconds**.
+- No 12-bag limit. Finish all 20 seconds to qualify for the leaderboard.
 - `/play` sends a play link in the group; `/top` or `/leaderboard` shows the group's top 10.
 
 ## Project structure
@@ -42,7 +43,7 @@ A fast-paced arcade game for the Bellscoin community. Catch BELLS bags, avoid Re
 
 - Telegram Mini App `initData` signature and age are verified by the server, never trusted from the browser.
 - Group links carry a signed group identifier; server also verifies player membership via Telegram.
-- Server creates a unique 30-second round and accepts the finish once.
+- Server creates a unique 20-second round and accepts the finish once.
 - Group leaderboards isolate scores by chat ID; top-10 names are returned from the signed Telegram identity, not supplied client nicknames.
 - **Anti-cheat limitation:** server currently trusts client-reported bag totals, subject to timing and cap checks. Motivated users could script inflated scores. Do **not** use the leaderboard for prizes until server-authoritative spawn events, replay validation, and abuse controls are implemented.
 
