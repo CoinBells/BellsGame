@@ -364,7 +364,8 @@
       }
       if (now >= nextReddAt) {
         spawn('redd');
-        nextReddAt = now + (elapsed >= 25 ? 1150 : 1750) + Math.random() * (elapsed >= 25 ? 900 : 1200);
+        // Spawn Redd repeatedly every 2–3 seconds; faster during the final 5-second Turbo.
+        nextReddAt = now + (elapsed >= 25 ? 2000 : 2000) + Math.random() * (elapsed >= 25 ? 500 : 1000);
       }
       for (const drop of drops) {
         drop.y += drop.speed * dt;
@@ -418,7 +419,7 @@
       lastFrame = startedAt;
       turboAnnounced = false;
       nextBagAt = startedAt + 180;
-      nextReddAt = startedAt + 1250;
+      nextReddAt = startedAt + 2000;
       playing = true;
       frameId = requestAnimationFrame(tick);
     }
