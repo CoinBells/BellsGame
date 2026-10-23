@@ -299,8 +299,8 @@
       if (score % 10 === 0) toast('🔔 ' + score + ' BELLS!');
       setTimeout(() => drop.el.remove(), 190);
     }
-    function spawn(type = 'bag') {
-      if (!playing || drops.size >= 34) return;
+    function spawn(type = 'bag', reddLane = -1, batchSpeed = null) {
+      if (!playing || drops.size >= (type === 'redd' ? 45 : 30)) return;
       const isRedd = type === 'redd';
       const el = document.createElement('button');
       el.type = 'button';
@@ -315,14 +315,14 @@
       const w = isRedd ? Math.min(Math.max(innerWidth * .10, 36), 52) : Math.min(Math.max(innerWidth * .16, 60), 86);
       const h = isRedd ? Math.min(Math.max(innerWidth * .13, 46), 66) : w;
       const maxX = Math.max(6, field.clientWidth - w - 6);
-      let x = 6 + Math.random() * Math.max(0, maxX - 6);
+      let x = isRedd && reddLane >= 0 ? 6 + (maxX - 6) * ((reddLane + .5) / 3) : 6 + Math.random() * Math.max(0, maxX - 6);
       const y = -h - 4;
       const elapsed = (performance.now() - startedAt) / 1000;
       const turbo = elapsed >= ROUND_SECONDS - 5;
-      const speed = Math.max(330, innerHeight * .42) + Math.random() * 150
+      const speed = (batchSpeed ?? (Math.max(330, innerHeight * .42) + Math.random() * 150))
         + Math.min(100, elapsed * 4) + (isRedd ? 85 : 0) + (turbo ? 85 : 0);
       // Three paths: straight, diagonally from left, diagonally from right.
-      const direction = isRedd ? Math.floor(Math.random() * 3) : 0;
+      const direction = isRedd && reddLane >= 0 ? 0 : isRedd ? Math.floor(Math.random() * 3) : 0;
       let vx = 0;
       if (direction === 1) { x = 6; vx = 110 + Math.random() * 85; }
       if (direction === 2) { x = maxX; vx = -(110 + Math.random() * 85); }
@@ -364,7 +364,8 @@
       }
       if (now >= nextReddAt) {
         // Three Redd foxes arrive together every 3–4 seconds.
-        for (let i = 0; i < 3; i++) spawn('redd');
+        const sharedSpeed = Math.max(330, innerHeight * .42) + Math.random() * 150;
+        for (let i = 0; i < 3; i++) spawn('redd', i, sharedSpeed);
         nextReddAt = now + 3000 + Math.random() * 1000;
       }
       for (const drop of drops) {
